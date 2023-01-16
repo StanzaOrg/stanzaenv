@@ -1,0 +1,8 @@
+packages stanzaenv/* defined-in "src"
+package curl defined-in "src/lib-curl/lib-curl.stanza"
+
+package curl requires :
+  dynamic-library: "curl.so"
+
+dynamic-library-dirs :
+  "bin/dylibs"

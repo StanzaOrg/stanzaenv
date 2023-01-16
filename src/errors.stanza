@@ -1,0 +1,19 @@
+defpackage stanzaenv/errors :
+  import core
+  import collections
+
+public deftype StanzaEnvError <: Exception
+
+public defstruct DownloadError <: StanzaEnvError :
+  url:String
+  exception:Exception
+
+defmethod print (o:OutputStream, e:DownloadError) :
+  print(o, "Error downloading from %~. %_." % [url(e), exception(e)])
+
+public defstruct BadResponseCode <: StanzaEnvError :
+  url:String
+  code:Long
+
+defmethod print (o:OutputStream, e:BadResponseCode) :
+  print(o, "Error downloading from %~. Error code %_." % [url(e), code(e)])

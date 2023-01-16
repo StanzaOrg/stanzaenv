@@ -1,0 +1,390 @@
+defpackage curl :
+  import core
+  import collections
+
+;============================================================
+;===================== Bindings =============================
+;============================================================
+lostanza deftype CURL
+extern curl_global_init : long -> int
+extern curl_easy_init : () -> ptr<CURL>
+extern curl_easy_setopt : (ptr<CURL>, long, long) -> int
+extern curl_easy_perform : ptr<CURL> -> int
+extern curl_easy_cleanup : ptr<CURL> -> int
+extern curl_easy_getinfo : (ptr<CURL>, long, ptr<?>) -> int
+extern curl_global_cleanup : () -> int
+extern curl_easy_strerror : (int) -> ptr<byte>
+
+;Constants
+#for (V in [CURL_GLOBAL_ALL,
+            CURLOPT_SSLVERSION,
+            CURLOPT_ERRORBUFFER,
+            CURLOPT_WRITEDATA,
+            CURLOPT_WRITEFUNCTION,
+            CURLOPT_VERBOSE,
+            CURLOPT_POSTFIELDS,
+            CURLOPT_HTTPHEADER,
+            CURLOPT_URL,
+            CURLOPT_FOLLOWLOCATION
+            CURLINFO_RESPONSE_CODE
+            CURL_SSLVERSION_DEFAULT
+            CURL_SSLVERSION_TLSv1
+            CURL_SSLVERSION_SSLv2
+            CURL_SSLVERSION_SSLv3
+            CURL_SSLVERSION_TLSv1_0
+            CURL_SSLVERSION_TLSv1_1
+            CURL_SSLVERSION_TLSv1_2
+            CURL_SSLVERSION_TLSv1_3
+            CURLOPT_CAINFO],
+      get_V in [get_CURL_GLOBAL_ALL,
+                get_CURLOPT_SSLVERSION,
+                get_CURLOPT_ERRORBUFFER,
+                get_CURLOPT_WRITEDATA,
+                get_CURLOPT_WRITEFUNCTION,
+                get_CURLOPT_VERBOSE,
+                get_CURLOPT_POSTFIELDS,
+                get_CURLOPT_HTTPHEADER,
+                get_CURLOPT_URL,
+                get_CURLOPT_FOLLOWLOCATION
+                get_CURLINFO_RESPONSE_CODE
+                get_CURL_SSLVERSION_DEFAULT
+                get_CURL_SSLVERSION_TLSv1
+                get_CURL_SSLVERSION_SSLv2
+                get_CURL_SSLVERSION_SSLv3
+                get_CURL_SSLVERSION_TLSv1_0
+                get_CURL_SSLVERSION_TLSv1_1
+                get_CURL_SSLVERSION_TLSv1_2
+                get_CURL_SSLVERSION_TLSv1_3
+                get_CURLOPT_CAINFO
+                ]):
+  extern get_V: () -> long
+  public lostanza val V:ref<Long> = new Long{call-c get_V()}
+
+;============================================================
+;======================= Wrappers ===========================
+;============================================================
+public lostanza deftype Curl <: Resource :
+  value: ptr<CURL>
+
+public lostanza defn Curl () -> ref<Curl> :
+  val curl = call-c curl_easy_init()
+  return new Curl{curl}
+
+lostanza defmethod free (c:ref<Curl>) -> ref<False> :
+  call-c curl_easy_cleanup(c.value)
+  return false
+
+lostanza var LONG-BUFFER:long
+public lostanza defn get (c:ref<Curl>, key:ref<Long>) -> ref<?> :
+  if key == CURLINFO_RESPONSE_CODE :
+    val ret = call-c curl_easy_getinfo(c.value, key.value, addr(LONG-BUFFER))
+    if ret != 0 : bad-curl-code(new Int{ret})
+    #if-defined(PLATFORM-WINDOWS) : 
+      LONG-BUFFER = (LONG-BUFFER << 32) >> 32
+    return new Long{LONG-BUFFER}
+  else : return bad-get-key(key)
+
+defn bad-get-key (key:Long) :
+  fatal("Bad code passed to curl: %_." % [key])
+
+public lostanza defn set (c:ref<Curl>, key:ref<Long>, value:long) -> ref<False> :
+  call-c curl_easy_setopt(c.value, key.value, value)
+  return false
+
+public lostanza defn set (c:ref<Curl>, key:ref<Long>, value:ref<Long>) -> ref<False> :
+  set(c, key, value.value)
+  return false
+
+public lostanza defn set (c:ref<Curl>, key:ref<Long>, value:ref<String>) -> ref<False> :
+  set(c, key, addr!(value.chars) as long)
+  return false
+
+public lostanza defn set (c:ref<Curl>, key:ref<Long>, value:ref<True|False>) -> ref<False> :
+  if value == true : set(c, key, 1L)
+  else : set(c, key, 0L)
+  return false
+
+public lostanza defn perform (c:ref<Curl>) -> ref<False> :
+  val ret = call-c curl_easy_perform(c.value)
+  if ret != 0:
+    bad-curl-code(new Int{ret})
+  return false
+
+public lostanza defn curl-error-string (code:ref<Int>) -> ref<String>: 
+  return String(call-c curl_easy_strerror(code.value))
+
+defn bad-curl-code (code:Int):
+  throw(CurlException(code))
+
+public lostanza defn init-curl () -> ref<False> :
+  call-c curl_global_init(CURL_GLOBAL_ALL.value)
+  return false
+
+public lostanza defn cleanup-curl () -> ref<False> :
+  call-c curl_global_cleanup()
+  return false
+
+;============================================================
+;================= Encoding Utilities =======================
+;============================================================
+public defn url-encode (url:String) :
+  defn standard-char? (c:Char) :
+    (c >= '0' and c <= '9') or
+    (c >= 'a' and c <= 'z') or
+    (c >= 'A' and c <= 'Z')
+  defn to-hex (i:Int) :
+    if i <= 9 : to-char(to-int('0') + i)
+    else : to-char(to-int('A') + i - 10)
+
+  val buffer = StringBuffer()
+  for c in url do :
+    if standard-char?(c) :
+      add(buffer, c)
+    else :
+      val i = to-int(c)
+      add(buffer, '%')
+      add(buffer, to-hex(i / 16))
+      add(buffer, to-hex(i % 16))
+
+  to-string(buffer)
+
+;============================================================
+;================= Initialization ===========================
+;============================================================
+
+;Initialize curl with the given headers, url, and verbosity flag.
+;Returns the allocated CURL slist containing the headers,
+;which must be freed afterwards.
+lostanza defn init-url-and-headers (curl:ref<Curl>,
+                                    headers:ref<Tuple<String>>,
+                                    url:ref<String>,
+                                    verbose?:ref<True|False>,
+                                    follow-redirect?:ref<True|False>) -> ptr<?> :
+  ;Workaround for older CentOS installations
+  val check = file-exists?(AUX-CA-CERT-PATH)
+  if check == true: 
+    set(curl, CURLOPT_CAINFO, AUX-CA-CERT-PATH)
+  ;Set the SSL version
+  set(curl, CURLOPT_SSLVERSION, CURL-SSL-VERSION)
+  ;Set the url
+  set(curl, CURLOPT_URL, url)
+  ;Set the verbosity flag
+  set(curl, CURLOPT_VERBOSE, verbose?)
+  set(curl, CURLOPT_FOLLOWLOCATION, follow-redirect?)
+  ;Set the list of http headers
+  var slist:ptr<?> = 0L as ptr<?>
+  for (var i:int = 0, i < length(headers).value, i = i + 1) :
+    val s = addr!(get(headers, new Int{i}).chars)
+    slist = call-c curl_slist_append(slist, s)
+  set(curl, CURLOPT_HTTPHEADER, slist as long)
+  ;Return
+  return slist
+
+;============================================================
+;================ High Level Functions ======================
+;============================================================
+public defstruct CurlException <: Exception: 
+  error-code:Int,
+
+defmethod print (o:OutputStream, e:CurlException): 
+  print(o, "%_" % [curl-error-string(error-code(e))])
+
+public lostanza defn read-url-to-file (curl:ref<Curl>,
+                                       headers:ref<Tuple<String>>,
+                                       url:ref<String>,
+                                       file:ref<FileOutputStream>,
+                                       verbose?:ref<True|False>,
+                                       follow-redirect?:ref<True|False>) -> ref<False> :
+  ;Initialize                                       
+  val header-slist = init-url-and-headers(curl, headers, url, verbose?, follow-redirect?)
+  
+  ;Choose default write function to write to file
+  set(curl, CURLOPT_WRITEFUNCTION, 0L)
+  set(curl, CURLOPT_WRITEDATA, file.file as long)
+
+  ;Perform Curl operation
+  val ret = call-c curl_easy_perform(curl.value)
+  if ret != 0:
+    call-c curl_slist_free_all(header-slist)
+    bad-curl-code(new Int{ret})
+
+  ;Return
+  call-c curl_slist_free_all(header-slist)
+  return false
+
+public defn read-url-to-file (curl:Curl,
+                              headers:Tuple<String>,
+                              url:String,
+                              filename:String,
+                              verbose?:True|False,
+                              follow-redirect?:True|False) -> False :
+  val file = FileOutputStream(filename)
+  try :
+    read-url-to-file(curl, headers, url, file, verbose?, follow-redirect?)
+  finally :
+    close(file)
+
+public lostanza defn read-url (curl:ref<Curl>,
+                               headers:ref<Tuple<String>>,
+                               url:ref<String>,
+                               verbose?:ref<True|False>,
+                               follow-redirect?:ref<True|False>) -> ref<String> :
+  ;Create Byte Buffer
+  val buffer       = new ByteVector{ByteArray(new Int{1024}), 0}
+  val buffer-box   = box-object(buffer)
+
+  ;Initialize                                       
+  val header-slist = init-url-and-headers(curl, headers, url, verbose?, follow-redirect?)
+
+  ;Write to data callback function
+  set(curl, CURLOPT_WRITEFUNCTION, addr!(data_callback) as long)
+  set(curl, CURLOPT_WRITEDATA, buffer-box)
+
+  ;Perform Curl operation
+  val ret = call-c curl_easy_perform(curl.value)
+  if ret != 0:
+    free-box(buffer-box)
+    call-c curl_slist_free_all(header-slist)
+    bad-curl-code(new Int{ret})
+
+  ;Get byte vector as string
+  val s = String(buffer.length, buffer.array)
+  
+  ;Delete Byte Buffers
+  free-box(buffer-box)
+  
+  ;Return false
+  call-c curl_slist_free_all(header-slist)
+  return s
+
+protected defenum CurlSSLVersion: 
+  DEFAULT   ; 0
+  TLS-v1
+  TLS-v1_0
+  TLS-v1_1
+  TLS-v1_2
+  TLS-v1_3
+  SSL-v2
+  SSL-v3
+
+defmethod print (o:OutputStream, c:CurlSSLVersion):
+  print(o, switch(c):
+    DEFAULT : "default" 
+    TLS-v1  : "tlsv1"
+    TLS-v1_0: "tlsv1.0"
+    TLS-v1_1: "tlsv1.1"
+    TLS-v1_2: "tlsv1.2"
+    TLS-v1_3: "tlsv1.3"
+    SSL-v2  : "sslv2"
+    SSL-v3  : "sslv3"
+  )
+
+lostanza var CURL-SSL-VERSION: long = call-c get_CURL_SSLVERSION_TLSv1_0()
+lostanza defn set-ssl-version (v:ref<Long>) -> ref<False>:
+  CURL-SSL-VERSION = v.value
+  return false
+
+protected defn set-ssl-version (v:CurlSSLVersion): 
+  set-ssl-version $  
+    switch(v): 
+      DEFAULT : CURL_SSLVERSION_DEFAULT  
+      TLS-v1  : CURL_SSLVERSION_TLSv1
+      TLS-v1_0: CURL_SSLVERSION_TLSv1_0
+      TLS-v1_1: CURL_SSLVERSION_TLSv1_1
+      TLS-v1_2: CURL_SSLVERSION_TLSv1_2
+      TLS-v1_3: CURL_SSLVERSION_TLSv1_3
+      SSL-v2  : CURL_SSLVERSION_SSLv2 
+      SSL-v3  : CURL_SSLVERSION_SSLv3
+
+public defn read-url-to-file (curl:Curl,
+                              headers:Tuple<String>,
+                              url:String,
+                              filename:String) -> False :
+  read-url-to-file(curl, headers, url, filename, false, true)
+
+public defn read-url (curl:Curl,
+                      headers: Tuple<String>,
+                      url:String) -> String :
+  read-url(curl, headers, url, false, true)
+
+public defn read-url (curl:Curl, url:String) -> String :
+  read-url(curl, [], url)
+
+extern defn data_callback (data:ptr<byte>, size:long, n:long, box:int) -> long :
+  val vec = boxed-object(box) as ref<ByteVector>
+  add-data(vec, data, n * size)
+  return n * size
+
+public defn with-curl<?T> (f:() -> ?T) :
+  try :
+    init-curl()
+    f()
+  finally :
+    cleanup-curl()
+
+extern curl_slist_append : (ptr<?>, ptr<byte>) -> ptr<?>
+extern curl_slist_free_all : (ptr<?>) -> int
+
+val AUX-CA-CERT-PATH = "/etc/ssl/certs/ca-bundle.crt"
+public lostanza defn read-post (curl:ref<Curl>, headers:ref<Tuple<String>>, url:ref<String>, data:ref<String>, verbose?:ref<True|False>, follow-redirect?:ref<True|False>) -> ref<String> :
+  ;Create Byte Buffer
+  val buffer = new ByteVector{ByteArray(new Int{1024}), 0}
+  val buffer-box = box-object(buffer)
+
+  ;Initialize                                       
+  val header-slist = init-url-and-headers(curl, headers, url, verbose?, follow-redirect?)
+
+  ;Set post fields
+  set(curl, CURLOPT_POSTFIELDS, data)
+
+  ;Write to data callback
+  set(curl, CURLOPT_WRITEFUNCTION, addr!(data_callback) as long)
+  set(curl, CURLOPT_WRITEDATA, buffer-box)
+
+  ;Perform curl command
+  val ret = call-c curl_easy_perform(curl.value)
+  if ret != 0: 
+    free-box(buffer-box)
+    call-c curl_slist_free_all(header-slist)
+    bad-curl-code(new Int{ret})
+
+  ;Get byte vector as string
+  val s = String(buffer.length, buffer.array)
+  
+  ;Delete Byte Buffer
+  free-box(buffer-box)
+
+  ;Return
+  call-c curl_slist_free_all(header-slist)
+  return s
+
+;Default setting of verbose? is false.
+public defn read-post (curl:Curl, headers:Tuple<String>, url:String, data:String) -> String :
+  read-post(curl, headers, url, data, false, true)
+
+;============================================================
+;===================== ByteVector ===========================
+;============================================================
+lostanza deftype ByteVector :
+  var array: ref<ByteArray>
+  var length: long
+
+extern memcpy: (ptr<?>, ptr<?>, long) -> ptr<?>
+lostanza defn add-data (a:ref<ByteVector>, data:ptr<byte>, nbytes:long) -> int :
+  ensure-capacity(a, nbytes + a.length)
+  call-c memcpy(addr!(a.array.data[a.length]), data, nbytes)
+  a.length = a.length + nbytes
+  return 0
+
+lostanza defn ensure-capacity (a:ref<ByteVector>, capacity:long) -> int :
+  if a.array.length < capacity :
+    ;Compute new length of array
+    var new-length:long = a.array.length
+    while new-length < capacity :
+      new-length = new-length * 2L
+    ;Copy over contents to new array
+    val array* = ByteArray(new Int{new-length as int})
+    call-c memcpy(addr!(array*.data), addr!(a.array.data), a.array.length)
+    ;Set new array as backing array of buffer
+    a.array = array*
+  return 0

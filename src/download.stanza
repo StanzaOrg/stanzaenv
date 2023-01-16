@@ -1,0 +1,15 @@
+defpackage stanzaenv/download :
+  import core
+  import collections
+  import stanzaenv/errors
+  import curl
+  
+public defn download-from-url (url:String, filename:String) -> False :
+  try :
+    resource curl = Curl()
+    read-url-to-file(curl, [], url, filename)
+    val code = curl[CURLINFO_RESPONSE_CODE]
+    if code != 200L :
+      throw(BadResponseCode(url, code))
+  catch (e:CurlException) :
+    throw(DownloadError(url, e))

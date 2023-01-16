@@ -1,0 +1,11 @@
+defpackage stanzaenv/harness :
+  import core
+  import collections
+  import stanzaenv/download
+
+defn main () :
+  println("Hello world")
+  download-from-url("http://www.google.c2om", "hello")
+  println("Done")
+
+main()
