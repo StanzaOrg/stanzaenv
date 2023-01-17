@@ -4,6 +4,14 @@ defpackage stanzaenv/errors :
 
 public deftype StanzaEnvError <: Exception
 
+;Occurs when an error occurs during unzipping of a zip file.
+public defstruct UnzipError <: StanzaEnvError :
+  zipfile:String
+
+defmethod print (o:OutputStream, e:UnzipError) :
+  print(o, "Error extracting contents of zip file %~." % [zipfile(e)])
+
+;Occurs when an error occurs when downloading from a URL.
 public defstruct DownloadError <: StanzaEnvError :
   url:String
   exception:Exception
@@ -11,6 +19,8 @@ public defstruct DownloadError <: StanzaEnvError :
 defmethod print (o:OutputStream, e:DownloadError) :
   print(o, "Error downloading from %~. %_." % [url(e), exception(e)])
 
+;Occurs when CURL returns a bad response code after downloading
+;from a URL.
 public defstruct BadResponseCode <: StanzaEnvError :
   url:String
   code:Long

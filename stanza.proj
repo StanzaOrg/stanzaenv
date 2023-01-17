@@ -1,8 +1,12 @@
+include "src/lib-curl/stanza.proj"
+include "src/lib-zip/stanza.proj"
 packages stanzaenv/* defined-in "src"
-package curl defined-in "src/lib-curl/lib-curl.stanza"
 
 package curl requires :
   dynamic-library: "curl.so"
+
+package zip requires :
+  dynamic-library: "libzip.5.5.dylib"
 
 dynamic-library-dirs :
   "bin/dylibs"

@@ -1,0 +1,11 @@
+defpackage stanzaenv/unzip :
+  import core
+  import collections
+  import zip
+  import stanzaenv/errors
+  
+public defn unzip-to-dir (zipfile:String, dirpath:String) -> False :
+  try :
+    extract(ZipArchive(zipfile), dirpath)
+  catch (e:ZipError|IOException) :
+    throw(UnzipError(zipfile))

@@ -1,0 +1,13 @@
+defpackage stanzaenv/urls :
+  import core
+  import collections
+
+;Returns the URL of the Stanza zip file.
+public defn stanza-zipfile (platform:Platform, version:[Int, Int, Int]) -> String :
+  val base-name = switch(platform) :
+    OS-X: "stanza"
+    Windows: "wstanza"
+    Linux: "lstanza"
+  val pattern = "http://lbstanza.org/resources/stanza/%__%__%__%_.zip"
+  val [a, b, c] = version
+  to-string(pattern % [base-name, a, b, c])
