@@ -1,13 +1,21 @@
 defpackage stanzaenv/system-state :
   import core
   import collections
+  import stz/printing-utils
+
+;============================================================
+;==================== State Representation ==================
+;============================================================
 
 ;Represents the SystemState of the Stanza environment.
 ;- project-version: A project-specific Stanza version override.
 ;- global-version: The global Stanza version.
 public defstruct SystemState :
   project-version:ProjectVersion|False
+  installation:EnvInstallation
   global-version:VersionSpecifier
+  path-status:PathStatus
+  installed-versions:Tuple<InstalledStanza>
 
 ;Represents a project-local version override for Stanza.
 public defstruct ProjectVersion :
@@ -24,3 +32,78 @@ public defstruct NamedVersion <: VersionSpecifier :
 ;Represents a local Stanza version: e.g. "mydir/tempstanza"
 public defstruct LocalVersion <: VersionSpecifier :
   path: String
+
+;Represents the location where stanzaenv is installed.
+public deftype EnvInstallation
+
+;Represents a hard-coded default location for the installation directory.
+;e.g. ~/.stanzaenv
+public defstruct DefaultInstallation <: EnvInstallation :
+  path: String
+
+;Represents a envvar-controlled location for the installation directory.
+;e.g. by STANZAENV_DIR
+public defstruct ConfigInstallation <: EnvInstallation :
+  path: String
+
+;Represents that stanzaenv is not installed properly.
+public defstruct NoInstallation <: EnvInstallation
+
+;Represents the status of the PATH variable.
+public defstruct PathStatus :
+  path: Tuple<String>
+  stanzaenv-index: Int|False
+
+;Indicates that a specific version of Stanza has been downloaded
+;and installed.
+public defstruct InstalledStanza :
+  version: NamedVersion
+
+;============================================================
+;===================== Printers =============================
+;============================================================
+
+defmethod print (o:OutputStream, s:InstalledStanza) :
+  print(o, "installed %_" % [version(s)])
+
+defmethod print (o:OutputStream, s:PathStatus) :
+  if empty?(path(s)) :
+    print(o, "No PATH detected")
+  else :
+    print(o, "PATH:")
+    for (p in path(s), i in 0 to false) do :
+      lnprint(o, "  %_" % [p])
+      if i == stanzaenv-index(s) :
+        print(o, " (stanzaenv directory)")
+    if stanzaenv-index(s) is False :
+      lnprint(o, "No stanzaenv directory found in PATH.")
+
+defmethod print (o:OutputStream, s:NoInstallation) :
+  print(o, "Not installed")
+
+defmethod print (o:OutputStream, s:ConfigInstallation) :
+  print(o, "Installed to $STANZAENV_DIR (%_)" % [path(s)])
+
+defmethod print (o:OutputStream, s:DefaultInstallation) :
+  print(o, "Installed to %_" % [path(s)])
+
+defmethod print (o:OutputStream, v:LocalVersion) :
+  print(o, "local %~" % [path(v)])
+
+defmethod print (o:OutputStream, v:NamedVersion) :
+  val [a b c] = value(v)
+  print(o, "%_.%_.%_" % [a, b, c])
+
+defmethod print (o:OutputStream, v:ProjectVersion) :
+  print(o, "Version: %_" % [version(v)])
+  lnprint(o, "Configured by: %~" % [filename(v)])
+
+defmethod print (o:OutputStream, s:SystemState) :
+  defn one? (x) : [] when x is False else [x]
+  val items = [
+    named-emptyable-list-fields("project-version", one?(project-version(s)))
+    simple-field("installation", installation(s))
+    simple-field("global-version", global-version(s))
+    path-status(s)
+    named-list-fields("installed-versions", installed-versions(s))]
+  print(o, "StanzaEnv SystemState%_" % [colon-field-list(items)])

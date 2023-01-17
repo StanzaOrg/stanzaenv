@@ -4,12 +4,190 @@ defpackage stanzaenv/harness :
   import stanzaenv/download
   import stanzaenv/unzip
   import stanzaenv/urls
+  import stanzaenv/system-state
+
+;============================================================
+;================ Testing System States =====================
+;============================================================
+
+defn testing-state (ints:Seqable<Int>) -> SystemState :
+
+  val int-counter = to-seq(ints)
+
+  defn int-switch (ctxt:String, max:Int) :
+    if empty?(int-counter) :
+      fatal("Expecting to receive integer switch (%_ or lower) for context %~." % [max, ctxt])
+    val i = next(int-counter)
+    if i > max :
+      fatal("Context %~ expecting integer switch %_ or lower, but received %_." % [ctxt, max])
+    ;Debugging println
+    ;println("Use switch %_ for context %~." % [i, ctxt])
+    i
+
+  defn project-version () -> ProjectVersion|False :
+    switch(int-switch("project-version", 2)) :
+      0 : ProjectVersion(".stanza_version", version-spec())
+      1 : ProjectVersion("../../.stanza_version", version-spec())
+      2 : false    
+      
+  defn version-spec () -> VersionSpecifier :
+    switch(int-switch("version-spec", 4)) :
+      0 : NamedVersion([0 17 49])
+      1 : NamedVersion([0 17 50])
+      2 : NamedVersion([1 0 0])
+      3 : LocalVersion("path/to/mybuild")
+      4 : LocalVersion("../../mystanza")
+
+  defn installation () -> EnvInstallation :
+    switch(int-switch("installation", 3)) :
+      0 : DefaultInstallation("/users/patricksli/.stanzaenv")
+      1 : DefaultInstallation("/users/naz/.stanzaenv")
+      2 : ConfigInstallation("/Applications/mystanzaenv")
+      3 : NoInstallation()
+
+  defn path-status () -> PathStatus :
+    val [path, index] = switch(int-switch("path",3)) :
+      0 : [[], false]
+      1 : [["/users/patricksli/bin"
+            "/users/patricksli/opt/local"
+            "/opt/bin"]
+           false]
+      2 : [["/users/patricksli/bin"
+            "/users/patricksli/opt/local"
+            "/opt/bin"]
+           1]
+      3 : [["/users/naz/bin"]
+           0]
+    PathStatus(path, index)
+
+  defn installed-versions () -> Tuple<InstalledStanza> :
+    val n = int-switch("installed-versions", 3)
+    to-tuple $ for i in 0 to n seq :
+      InstalledStanza(version-spec() as NamedVersion)
+
+  SystemState(
+    project-version()
+    installation()
+    version-spec()
+    path-status()
+    installed-versions())
+
+;============================================================
+;================= Testing out System States ================
+;============================================================
+
+defn print-states () :
+  println $ testing-state $ [
+    0 ;project-version
+    0 ;version-spec
+    0 ;installation
+    0 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    1 ;project-version
+    0 ;version-spec
+    0 ;installation
+    0 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    0 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    2 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    3 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    0 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    1 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    2 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    3 ;path
+    1 ;installed-versions
+    2 ;version-spec
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    3 ;path
+    0 ;installed-versions
+  ]
+
+  println $ testing-state $ [
+    2 ;project-version
+    0 ;installation
+    4 ;version-spec
+    3 ;path
+    3 ;installed-versions
+    1 ;version 0
+    1 ;version 1
+    2 ;version 2
+  ]
+
+
+
+
 
 defn main () :
   println("Hello world")
   ;download-from-url("http://www.google.c2om", "hello")
   println("Done")
-
+  print-states()
   
 
 main()
