@@ -1,0 +1,7 @@
+defpackage stanzaenv/system-api :
+  import core
+  import collections
+
+public deftype System
+
+public defmulti get-env (s:System, name:String) -> String|False

@@ -1,0 +1,11 @@
+defpackage stanzaenv/paths :
+  import core
+  import stanzaenv/system-api
+
+;Relative path to stanzaenv executable.
+public defn relpath-to-stanzaenv () :
+  "bin/stanzaenv"
+
+;Retrieve the default installation directory.
+public defn default-installation-dir (sys:System) -> String :
+  fatal("Not yet implemented")

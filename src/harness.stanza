@@ -5,6 +5,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/unzip
   import stanzaenv/urls
   import stanzaenv/system-state
+  import stanzaenv/install
 
 ;============================================================
 ;================ Testing System States =====================
@@ -179,7 +180,9 @@ defn print-states () :
     2 ;version 2
   ]
 
-
+;============================================================
+;==================== Main Launcher =========================
+;============================================================
 
 
 

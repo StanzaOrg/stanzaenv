@@ -27,3 +27,21 @@ public defstruct BadResponseCode <: StanzaEnvError :
 
 defmethod print (o:OutputStream, e:BadResponseCode) :
   print(o, "Error downloading from %~. Error code %_." % [url(e), code(e)])
+
+;Occurs when a STANZAENV_DIR installation is corrupted.
+public defstruct BadConfigInstallation <: StanzaEnvError :
+  path:String
+
+defmethod print (o:OutputStream, e:BadConfigInstallation) :
+  val msg = "The stanzaenv installation pointed to by STANZAENV_DIR at %~ is corrupted. \
+             No 'stanzaenv' executable found."
+  print(o, msg % [path(e)])
+
+;Occurs when a default installation is corrupted.
+public defstruct BadDefaultInstallation <: StanzaEnvError :
+  path:String
+  
+defmethod print (o:OutputStream, e:BadDefaultInstallation) :
+  val msg = "The stanzaenv installation at the default location %~ is corrupted. \
+             No 'stanzaenv' executable found."
+  print(o, msg % [path(e)])
