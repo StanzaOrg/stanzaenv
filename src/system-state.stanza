@@ -1,0 +1,26 @@
+defpackage stanzaenv/system-state :
+  import core
+  import collections
+
+;Represents the SystemState of the Stanza environment.
+;- project-version: A project-specific Stanza version override.
+;- global-version: The global Stanza version.
+public defstruct SystemState :
+  project-version:ProjectVersion|False
+  global-version:VersionSpecifier
+
+;Represents a project-local version override for Stanza.
+public defstruct ProjectVersion :
+  filename: String
+  version: VersionSpecifier
+
+;Represents a Stanza version.
+public deftype VersionSpecifier
+
+;Represents a named Stanza version: e.g. 0.14.33
+public defstruct NamedVersion <: VersionSpecifier :
+  value: [Int, Int, Int]
+
+;Represents a local Stanza version: e.g. "mydir/tempstanza"
+public defstruct LocalVersion <: VersionSpecifier :
+  path: String
