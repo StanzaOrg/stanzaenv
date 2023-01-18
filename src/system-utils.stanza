@@ -66,7 +66,7 @@ public defstruct Bad <: PromptResult<Void> :
 ;Prompt a user repeatedly and verify the output.
 public defn prompt-user<?T> (verify:String -> PromptResult<?T>, sys:System, prompt:String) -> T :
   let loop () :
-    val str = prompt-user(sys, prompt)
+    val str = trim(prompt-user(sys, prompt))
     match(verify(str)) :
       (result:Good<T>) :
         value(result)

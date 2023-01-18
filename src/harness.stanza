@@ -242,7 +242,8 @@ defn try-install () :
   val sys0 = MockSystem(
     []
     ["/Applications" => DirectoryType()]
-    ["installed in" => "/Applications/stanzaenv"]
+    ["installed in" => "/Applications/stanzaenv"
+     "initial version of Stanza" => ""]
     OS-X)
   install-stanzaenv(sys0)
 

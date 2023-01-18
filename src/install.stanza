@@ -9,7 +9,10 @@ defpackage stanzaenv/install :
   import stanzaenv/paths
   import stanzaenv/urls
   import stanzaenv/install-version
+  import stanzaenv/versions
 
+;Main entry point: Install the 'stanzaenv' system.
+;Will detect whether already installed.
 public defn install-stanzaenv (sys:System) -> False :
   ;Check whether it's already installed.
   match(check-already-installed(sys)) :
@@ -75,8 +78,15 @@ defn parent-dir (dir:String) -> String|False :
   catch (e) : false
 
 ;Request an initial version for the system to install.
-defn request-initial-version (sys:System) -> NamedVersion :
-  fatal("Not yet implemented")
+defn request-initial-version (sys:System) -> NamedVersion|False :
+  val msg = "What initial version of Stanza should be installed? Leave blank to leave Stanza uninstalled: "  
+  within version-str = prompt-user(sys, msg) :
+    if version-str == "" :
+      Good(false)
+    else :
+      match(parse-named-version(version-str)) :
+        (v:NamedVersion) : Good(v)
+        (f:False) : Bad("Invalid version format. Expected a version string like '0.17.3'.")
 
 ;Perform a fresh install of the system.
 defn fresh-install (sys:System) -> False :
@@ -95,11 +105,16 @@ defn fresh-install (sys:System) -> False :
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
+  install-initial-stanza-version(sys)
 
 ;Perform an initial install of the Stanza version.
-defn install-initial-version (sys:System) -> False :
+defn install-initial-stanza-version (sys:System) -> False :
   val version = request-initial-version(sys)
-  install-stanza-version(sys, version)
+  match(version) :
+    (version:NamedVersion) :
+      install-stanza-version(sys, version)
+    (version:False) :
+      println("Leaving Stanza uninstalled.")  
 
 ;Return a new path where the relative path is relative to the given directory.
 defn relative-to (dir:String, path:String) -> String :
