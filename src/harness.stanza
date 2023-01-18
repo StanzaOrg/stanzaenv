@@ -186,21 +186,51 @@ defn print-states () :
 ;============================================================
 
 defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
-                 existing-files:Tuple<String>,
+                 existing-files:Tuple<KeyValue<String,FileType>>,
+                 prompts:Tuple<KeyValue<String,String>>,
                  platform:Platform) -> System :
+  val prompt-seq = to-seq(prompts)  
   new System :
     defmethod get-env (this, name:String) :
       val result = lookup?(env-vars, name)
       println("MockSystem: get-env(%~) = %~" % [name, result])
       result
+    defmethod create-dir (this, name:String) :
+      println("MockSystem: create-dir(%~)" % [name])
     defmethod file-exists? (this, name:String) :
-      val result = contains?(existing-files, name)
+      val result = contains?(seq(key,existing-files), name)
       println("MockSystem: file-exists?(%~) = %~" % [name, result])
       result
+    defmethod directory? (this, name:String) :
+      val entry = find!({key(_) == name}, existing-files)
+      value(entry) is DirectoryType
     defmethod current-platform (this) :
       val result = platform
       println("MockSystem: current-platform() = %~" % [result])
       result
+    defmethod download-to-file (this, url:String, filename:String) :
+      println("MockSystem: download-to-file(%~, %~)" % [url, filename])
+    defmethod unzip-to-folder (this, zipfile:String, folder:String) :
+      println("MockSystem: unzip-to-folder(%~, %~)" % [zipfile, folder])
+    defmethod delete-recursive (this, folder:String) :
+      println("MockSystem: delete-recursive %~" % [folder])
+    defmethod prompt-user (this, prompt:String) :
+      ;Retrieve answer from prompt sequence.
+      val answer = if not empty?(prompt-seq) :
+        val entry = peek(prompt-seq)
+        if substring?(prompt, key(entry)) :
+          next(prompt-seq)
+          value(entry)
+      ;Either return the answer or fatal.
+      match(answer:String) :
+        println("MockSystem: %_%_" % [prompt, answer])
+        answer
+      else :
+        println("MockSystem: %_" % [prompt])
+        if empty?(prompt-seq) :
+          fatal("No more answers in prompt sequence.")
+        else :
+          fatal("Next prompt in prompt sequence expected to be about %~." % [key(next(prompt-seq))])
 
 ;============================================================
 ;==================== Try Out Install =======================
@@ -209,7 +239,8 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
 defn try-install () :
   val sys0 = MockSystem(
     []
-    []
+    ["/Applications" => DirectoryType()]
+    ["installed in" => "/Applications/stanzaenv"]
     OS-X)
   install-stanzaenv(sys0)
 

@@ -36,15 +36,18 @@ public defstruct LocalVersion <: VersionSpecifier :
 ;Represents the location where stanzaenv is installed.
 public deftype EnvInstallation
 
+;Return the path of the installation.
+public defmulti path (e:EnvInstallation) -> String
+
 ;Represents a hard-coded default location for the installation directory.
 ;e.g. ~/.stanzaenv
 public defstruct DefaultInstallation <: EnvInstallation :
-  path: String
+  path: String with: (as-method => true)
 
 ;Represents a envvar-controlled location for the installation directory.
 ;e.g. by STANZAENV_DIR
 public defstruct ConfigInstallation <: EnvInstallation :
-  path: String
+  path: String with: (as-method => true)
 
 ;Represents that stanzaenv is not installed properly.
 public defstruct NoInstallation <: EnvInstallation

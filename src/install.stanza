@@ -1,5 +1,6 @@
 defpackage stanzaenv/install :
   import core
+  import core/parsed-path
   import collections
   import stanzaenv/system-state
   import stanzaenv/system-api
@@ -10,9 +11,7 @@ defpackage stanzaenv/install :
 
 public defn install-stanzaenv (sys:System) -> False :
   ;Check whether it's already installed.
-  val install = check-already-installed(sys)
-
-  match(install) :
+  match(check-already-installed(sys)) :
     (install:False) :
       fresh-install(sys)
     (install:EnvInstallation) :
@@ -49,11 +48,48 @@ defn report-already-installed (install:EnvInstallation) -> False :
                by the STANZAENV_DIR environment variable: %~." % [path(install)])
 
 ;Request an installation directory or use default.
-defn request-install-dir (sys:System) -> String :
-  fatal("Not yet implemented")
+defn request-install-dir (sys:System) -> EnvInstallation :
+  let loop () :
+    val msg = "Which directory should stanzaenv be installed in? Leave blank to use the default directory in $HOME: "
+    val dir = prompt-user(sys, msg)
+    if dir == "" :
+      match(default-installation-dir(sys)) :
+        (dir:String) :
+          DefaultInstallation(dir)
+        (f:False) :
+          println("Could not determine default installation directory.")
+          loop()
+    else :
+      match(verify-valid-install-path(sys, dir)) :
+        (t:True) :
+          ConfigInstallation(dir)
+        (s:String) :
+          println(s)
+          loop()
+
+;Verifies that the given directory is a valid installation path.
+;Returns true if it is, otherwise returns a reason for why it is not.
+defn verify-valid-install-path (sys:System, dir:String) -> String|True :
+  match(parent-dir(dir)) :
+    (p:String) :
+      if file-exists?(sys, p) :
+        if directory?(sys, p) :
+          true
+        else :
+          to-string("The parent path '%_' is not a directory." % [p])
+      else :
+        to-string("Installation directory '%_' does not exist." % [p])
+    (f:False) :
+      "Improperly formatted installation directory."
+
+;Returns the parent directory for the given path, or false if it is
+;not a valid path.
+defn parent-dir (dir:String) -> String|False :
+  try : to-string(enclosing-dir(parse-path(dir)))
+  catch (e) : false
 
 ;Request an initial version for the system to install.
-defn request-initial-version (sys:System) -> [Int Int Int] :
+defn request-initial-version (sys:System) -> NamedVersion :
   fatal("Not yet implemented")
 
 ;Perform a fresh install of the system.
@@ -63,19 +99,21 @@ defn fresh-install (sys:System) -> False :
   ;Extract the zipfile to the appropriate location.
   ;Set up the right folders.
   ;Install the initial version of Stanza.
-  within temps = make-temp-directories(sys) :
-    val install-dir = request-install-dir(sys)
-    val url = stanzaenv-zip-url()
-    val temp = temp-dir(temps)
+  val install-dir = request-install-dir(sys)
+  val parent-dir = parent-dir(path(install-dir)) as String
+  within temp-dirs = make-temp-dirs(sys, parent-dir) :    
+    val url = stanzaenv-zip-url(current-platform(sys))
+    val temp = temp-dir(temp-dirs)
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
-    download-to-file(sys, url, stanzaenv-zip)
-    unzip-to-folder(sys, stanzaenv-zip, install-dir)
-    println("Successfully installed stanzaenv to '%_'." % [install-dir])
+    download-to-file(sys, url, stanzaenv-zip)    
+    unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
+    println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
 
 ;Perform an initial install of the Stanza version.
 defn install-initial-version (sys:System) -> False :
   val version = request-initial-version(sys)
   install-stanza-version(sys, version)
 
+;Return a new path where the relative path is relative to the given directory.
 defn relative-to (dir:String, path:String) -> String :
-  fatal("Not yet implemented")
+  to-string(relative-to-dir(parse-path(dir), path))
