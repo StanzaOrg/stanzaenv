@@ -11,3 +11,7 @@ public defn stanza-zipfile (platform:Platform, version:[Int, Int, Int]) -> Strin
   val pattern = "http://lbstanza.org/resources/stanza/%__%__%__%_.zip"
   val [a, b, c] = version
   to-string(pattern % [base-name, a, b, c])
+
+;Returns the URL of the stanzaenv zip file.
+public defn stanzaenv-zip-url () -> String :
+  fatal("Not yet implemented")

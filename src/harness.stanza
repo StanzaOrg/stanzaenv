@@ -6,6 +6,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/urls
   import stanzaenv/system-state
   import stanzaenv/install
+  import stanzaenv/system-api
 
 ;============================================================
 ;================ Testing System States =====================
@@ -74,7 +75,7 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
     installed-versions())
 
 ;============================================================
-;================= Testing out System States ================
+;================= Printing out System States ===============
 ;============================================================
 
 defn print-states () :
@@ -181,16 +182,45 @@ defn print-states () :
   ]
 
 ;============================================================
+;==================== Mock System ===========================
+;============================================================
+
+defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
+                 existing-files:Tuple<String>,
+                 platform:Platform) -> System :
+  new System :
+    defmethod get-env (this, name:String) :
+      val result = lookup?(env-vars, name)
+      println("MockSystem: get-env(%~) = %~" % [name, result])
+      result
+    defmethod file-exists? (this, name:String) :
+      val result = contains?(existing-files, name)
+      println("MockSystem: file-exists?(%~) = %~" % [name, result])
+      result
+    defmethod current-platform (this) :
+      val result = platform
+      println("MockSystem: current-platform() = %~" % [result])
+      result
+
+;============================================================
+;==================== Try Out Install =======================
+;============================================================
+
+defn try-install () :
+  val sys0 = MockSystem(
+    []
+    []
+    OS-X)
+  install-stanzaenv(sys0)
+
+;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
-
-
 defn main () :
-  println("Hello world")
-  ;download-from-url("http://www.google.c2om", "hello")
-  println("Done")
-  print-states()
+  try-install()
   
 
+within (package,sig) = set-stack-trace-filter() :
+  package != `core
 main()

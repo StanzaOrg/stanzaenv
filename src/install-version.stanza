@@ -1,0 +1,10 @@
+defpackage stanzaenv/install-version :
+  import core
+  import collections
+  import stanzaenv/system-state
+  import stanzaenv/system-api
+
+;Download the given Stanza version.
+;Assumes that it's not already installed.
+public defn install-stanza-version (sys:System, v:NamedVersion) -> False :
+  fatal("Not implemented")

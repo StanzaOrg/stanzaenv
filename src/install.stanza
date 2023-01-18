@@ -5,15 +5,18 @@ defpackage stanzaenv/install :
   import stanzaenv/system-api
   import stanzaenv/errors
   import stanzaenv/paths
+  import stanzaenv/urls
+  import stanzaenv/install-version
 
 public defn install-stanzaenv (sys:System) -> False :
   ;Check whether it's already installed.
   val install = check-already-installed(sys)
 
-  if install is False :
-    fresh-install(sys)
-  else :
-    report-already-installed(install)
+  match(install) :
+    (install:False) :
+      fresh-install(sys)
+    (install:EnvInstallation) :
+      report-already-installed(install)
 
 ;Check whether stanzaenv is already installed. Returns false
 ;if it is not. Throws an exception if the installation is
@@ -28,11 +31,12 @@ defn check-already-installed (sys:System) -> EnvInstallation|False :
         else : throw(BadConfigInstallation(envdir))
     ;Supposed to be installed to the default directory.
     (f:False) :
-      val dir = default-installation-dir()
-      if file-exists?(sys, dir) :
-        val path = relative-to(dir, relpath-to-stanzaenv())
-        if file-exists?(sys,path) : DefaultInstallation(path)
-        else : throw(BadDefaultInstallation(dir))
+      val dir = default-installation-dir(sys)
+      match(dir:String) :
+        if file-exists?(sys, dir) :
+          val path = relative-to(dir, relpath-to-stanzaenv())
+          if file-exists?(sys,path) : DefaultInstallation(path)
+          else : throw(BadDefaultInstallation(dir))
         
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :
@@ -44,9 +48,34 @@ defn report-already-installed (install:EnvInstallation) -> False :
       println("Stanzaenv has already been installed to the location pointed to \
                by the STANZAENV_DIR environment variable: %~." % [path(install)])
 
+;Request an installation directory or use default.
+defn request-install-dir (sys:System) -> String :
+  fatal("Not yet implemented")
+
+;Request an initial version for the system to install.
+defn request-initial-version (sys:System) -> [Int Int Int] :
+  fatal("Not yet implemented")
+
 ;Perform a fresh install of the system.
 defn fresh-install (sys:System) -> False :
-  fatal("Not yet implemented")
+  ;Create a temporary directory beside the appropriate location.
+  ;Download the zipfile containing the stanzaenv bundle.
+  ;Extract the zipfile to the appropriate location.
+  ;Set up the right folders.
+  ;Install the initial version of Stanza.
+  within temps = make-temp-directories(sys) :
+    val install-dir = request-install-dir(sys)
+    val url = stanzaenv-zip-url()
+    val temp = temp-dir(temps)
+    val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
+    download-to-file(sys, url, stanzaenv-zip)
+    unzip-to-folder(sys, stanzaenv-zip, install-dir)
+    println("Successfully installed stanzaenv to '%_'." % [install-dir])
+
+;Perform an initial install of the Stanza version.
+defn install-initial-version (sys:System) -> False :
+  val version = request-initial-version(sys)
+  install-stanza-version(sys, version)
 
 defn relative-to (dir:String, path:String) -> String :
   fatal("Not yet implemented")

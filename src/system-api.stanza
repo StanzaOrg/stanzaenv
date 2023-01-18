@@ -2,6 +2,29 @@ defpackage stanzaenv/system-api :
   import core
   import collections
 
+;============================================================
+;====================== Primary API =========================
+;============================================================
+
 public deftype System
 
 public defmulti get-env (s:System, name:String) -> String|False
+
+public defmulti file-exists? (s:System, name:String) -> True|False
+
+public defmulti current-platform (s:System) -> Platform
+
+public defmulti download-to-file (s:System, url:String, filename:String) -> False
+
+public defmulti unzip-to-folder (s:System, zipfile:String, folder:String) -> False
+
+public defmulti delete-recursive (s:System, folder:String) -> False
+
+;============================================================
+;===================== Derived API ==========================
+;============================================================
+
+public deftype TempDirs
+
+public defmulti temp-dir (dirs:TempDirs) -> String
+
