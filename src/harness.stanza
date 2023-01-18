@@ -214,6 +214,8 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("MockSystem: unzip-to-folder(%~, %~)" % [zipfile, folder])
     defmethod delete-recursive (this, folder:String) :
       println("MockSystem: delete-recursive %~" % [folder])
+    defmethod move-dir (this, oldpath:String, newpath:String) :
+      println("MockSystem: move-dir(%~, %~)" % [oldpath, newpath])
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
       val answer = if not empty?(prompt-seq) :

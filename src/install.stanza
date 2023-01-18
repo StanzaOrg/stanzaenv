@@ -4,6 +4,7 @@ defpackage stanzaenv/install :
   import collections
   import stanzaenv/system-state
   import stanzaenv/system-api
+  import stanzaenv/system-utils
   import stanzaenv/errors
   import stanzaenv/paths
   import stanzaenv/urls
@@ -49,38 +50,23 @@ defn report-already-installed (install:EnvInstallation) -> False :
 
 ;Request an installation directory or use default.
 defn request-install-dir (sys:System) -> EnvInstallation :
-  let loop () :
-    val msg = "Which directory should stanzaenv be installed in? Leave blank to use the default directory in $HOME: "
-    val dir = prompt-user(sys, msg)
+  val msg = "Which directory should stanzaenv be installed in? Leave blank to use the default directory in $HOME: "
+  within dir = prompt-user(sys, msg) :
     if dir == "" :
       match(default-installation-dir(sys)) :
         (dir:String) :
-          DefaultInstallation(dir)
+          Good(DefaultInstallation(dir))
         (f:False) :
-          println("Could not determine default installation directory.")
-          loop()
+          Bad("Could not determine default installation directory.")
     else :
-      match(verify-valid-install-path(sys, dir)) :
-        (t:True) :
-          ConfigInstallation(dir)
-        (s:String) :
-          println(s)
-          loop()
-
-;Verifies that the given directory is a valid installation path.
-;Returns true if it is, otherwise returns a reason for why it is not.
-defn verify-valid-install-path (sys:System, dir:String) -> String|True :
-  match(parent-dir(dir)) :
-    (p:String) :
-      if file-exists?(sys, p) :
-        if directory?(sys, p) :
-          true
-        else :
-          to-string("The parent path '%_' is not a directory." % [p])
-      else :
-        to-string("Installation directory '%_' does not exist." % [p])
-    (f:False) :
-      "Improperly formatted installation directory."
+      match(parent-dir(dir)) :
+        (p:String) :
+          if file-exists?(sys, p) :
+            if directory?(sys, p) : Good(ConfigInstallation(dir))
+            else : Bad(to-string("The parent path '%_' is not a directory." % [p]))
+          else : Bad(to-string("Installation directory '%_' does not exist." % [p]))
+        (f:False) :
+          Bad("Improperly formatted installation directory.")
 
 ;Returns the parent directory for the given path, or false if it is
 ;not a valid path.
@@ -107,6 +93,7 @@ defn fresh-install (sys:System) -> False :
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
     download-to-file(sys, url, stanzaenv-zip)    
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
+    move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
 
 ;Perform an initial install of the Stanza version.

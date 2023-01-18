@@ -26,45 +26,5 @@ public defmulti delete-recursive (s:System, folder:String) -> False
 
 public defmulti prompt-user (s:System, prompt:String) -> String
 
-;============================================================
-;===================== Derived API ==========================
-;============================================================
+public defmulti move-dir (s:System, old-path:String, new-path:String) -> False
 
-;Represents a collection of temporary directories.
-public deftype TempDirs
-
-;Request another temporary directory.
-public defmulti temp-dir (dirs:TempDirs) -> String
-
-;Execute a body with the ability to create temporary directories in the given
-;directory.
-public defn make-temp-dirs<?T> (body:TempDirs -> ?T, sys:System, dir:String) -> T :
-  ;Store all created directories.
-  val created-dirs = Vector<String>()
-
-  ;Count upwards to create unique temporary names.
-  val counter = to-seq(0 to false)
-
-  ;Create a new temporary directory.
-  defn make-temp-dir () -> String :
-    val name = string-join([dir "/temp" next(counter)])
-    if file-exists?(sys, name) :
-      make-temp-dir()
-    else :
-      create-dir(sys, name)
-      add(created-dirs, name)
-      name
-
-  ;Delete all temporary directories.
-  defn delete-all-temp-dirs () -> False :
-    for dir in created-dirs do :
-      delete-recursive(sys, dir)
-
-  ;Launch!
-  try :
-    val temp-dirs = new TempDirs :
-      defmethod temp-dir (this) : make-temp-dir()
-    body(temp-dirs)
-  finally :
-    delete-all-temp-dirs()
-  
