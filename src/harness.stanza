@@ -6,6 +6,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/unzip
   import stanzaenv/urls
   import stanzaenv/system-state
+  import stanzaenv/read-state
   import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
@@ -299,6 +300,29 @@ defn try-install-1 () :
   install-stanzaenv(sys)
 
 ;============================================================
+;===================== Try Out Read State ===================
+;============================================================
+
+defn try-read-state () :
+  val sys = MockSystem(
+    ;env vars
+    ["SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()]
+    
+    ;prompts
+    ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => ""]
+
+    ;platform
+    OS-X)
+  system-state(sys)
+
+;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
@@ -307,4 +331,4 @@ defn try-install-1 () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-try-install-1()
+try-read-state()

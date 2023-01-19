@@ -1,0 +1,58 @@
+defpackage stanzaenv/read-state :
+  import core
+  import collections
+  import stanzaenv/system-state
+  import stanzaenv/system-api
+  import stanzaenv/paths
+  import stanzaenv/errors
+
+public defn system-state (sys:System) -> SystemState :
+  fatal("Not yet implemented")
+
+;============================================================
+;============ Read the Project Stanza Version ===============
+;============================================================
+
+;============================================================
+;=================== Detect Installation ====================
+;============================================================
+
+;Check whether stanzaenv is already installed. Returns false
+;if it is not. Throws an exception if the installation is
+;corrupted or error occurs during confirmation.
+public defn detect-installation (sys:System) -> EnvInstallation :
+  match(get-env(sys, "STANZAENV_DIR")) :
+    ;Supposed to be installed to a specific directory.
+    (envdir:String) :
+      if file-exists?(sys, envdir) :
+        if not valid-installation?(sys, envdir) :
+          throw(BadConfigInstallation(envdir))
+        ConfigInstallation(envdir)
+      else : NoInstallation()
+    ;Supposed to be installed to the default directory.
+    (f:False) :
+      val dir = default-installation-dir(sys)
+      match(dir:String) :
+        if file-exists?(sys, dir) :
+          if not valid-installation?(sys, dir) :
+            throw(BadDefaultInstallation(dir))
+          DefaultInstallation(dir)
+        else : NoInstallation()
+      else : NoInstallation()
+
+;Returns true if the given root is a valid installation.
+defn valid-installation? (sys:System, root:String) -> True|False :
+  val path = relative-to(root, relpath-to-stanzaenv())
+  file-exists?(sys, path)
+
+;============================================================
+;============ Read the Global Stanza Version ================
+;============================================================
+
+;============================================================
+;================= Read the Path Status =====================
+;============================================================
+
+;============================================================
+;================ Detect Installed Versions =================
+;============================================================

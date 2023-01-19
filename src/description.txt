@@ -16,6 +16,8 @@ Main Flow:
 
   @[file:system-path.stanza] Installation flow for managing system PATH settings.
 
+  @[file:read-state.stanza] Read in the current system state of stanzaenv.
+
 Errors:
 
   @[file:errors.stanza] Contains all errors relevant to stanzaenv.

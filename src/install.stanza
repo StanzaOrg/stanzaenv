@@ -3,6 +3,7 @@ defpackage stanzaenv/install :
   import core/parsed-path
   import collections
   import stanzaenv/system-state
+  import stanzaenv/read-state
   import stanzaenv/system-api
   import stanzaenv/system-path
   import stanzaenv/system-utils
@@ -16,31 +17,11 @@ defpackage stanzaenv/install :
 ;Will detect whether already installed.
 public defn install-stanzaenv (sys:System) -> False :
   ;Check whether it's already installed.
-  match(check-already-installed(sys)) :
-    (install:False) :
+  match(detect-installation(sys)) :
+    (install:NoInstallation) :
       fresh-install(sys)
     (install:EnvInstallation) :
       report-already-installed(install)
-
-;Check whether stanzaenv is already installed. Returns false
-;if it is not. Throws an exception if the installation is
-;corrupted or error occurs during confirmation.
-defn check-already-installed (sys:System) -> EnvInstallation|False :
-  match(get-env(sys, "STANZAENV_DIR")) :
-    ;Supposed to be installed to a specific directory.
-    (envdir:String) :
-      if file-exists?(sys, envdir) :
-        val path = relative-to(envdir, relpath-to-stanzaenv())
-        if file-exists?(sys,path) : ConfigInstallation(envdir)
-        else : throw(BadConfigInstallation(envdir))
-    ;Supposed to be installed to the default directory.
-    (f:False) :
-      val dir = default-installation-dir(sys)
-      match(dir:String) :
-        if file-exists?(sys, dir) :
-          val path = relative-to(dir, relpath-to-stanzaenv())
-          if file-exists?(sys,path) : DefaultInstallation(path)
-          else : throw(BadDefaultInstallation(dir))
         
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :
