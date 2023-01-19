@@ -7,6 +7,7 @@ defpackage stanzaenv/read-state :
   import stanzaenv/system-state
   import stanzaenv/system-api
   import stanzaenv/system-utils
+  import stanzaenv/system-path
   import stanzaenv/versions
   import stanzaenv/paths
   import stanzaenv/errors
@@ -21,10 +22,13 @@ public defn system-state (sys:System) -> SystemState :
     val project-version = read-project-stanza-version(sys)
     ;Read the global version.
     val global-version = read-global-stanza-version(sys, path(installation))
+    ;Read the path status
+    val path-status = read-path-status(sys, path(installation))
     
     println("Installation: %_" % [installation])
     println("Project version: %_" % [project-version])
     println("Global version: %_" % [global-version])
+    println("Path status: %_" % [path-status])
     fatal("Not yet implemented")
 
 ;============================================================
@@ -91,12 +95,13 @@ defn valid-installation? (sys:System, root:String) -> True|False :
   not directory?(sys, path)
 
 ;============================================================
-;============ Read the Global Stanza Version ================
-;============================================================
-
-;============================================================
 ;================= Read the Path Status =====================
 ;============================================================
+
+defn read-path-status (sys:System, root:String) -> PathStatus :
+  val syspaths = system-paths(sys)
+  val index = find-on-path-list(sys, syspaths, bin-dir(root))
+  PathStatus(syspaths, index)
 
 ;============================================================
 ;================ Detect Installed Versions =================

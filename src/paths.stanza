@@ -8,6 +8,10 @@ defpackage stanzaenv/paths :
 public defn relpath-to-stanzaenv () -> String :
   "bin/stanzaenv"
 
+;Path to the stanzaenv binary directory.
+public defn bin-dir (root:String) -> String :
+  relative-to(root, "bin")
+
 ;Name of the stanza version configuration file.
 public defn project-config-file () -> String :
   ".stanza-version"

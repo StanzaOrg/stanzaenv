@@ -11,14 +11,19 @@ public defn system-paths (sys:System) -> Tuple<String> :
     (str:String) : to-tuple(split(str, ":"))
     (f:False) : []
 
-;Return true if the given path is on the system path.
-public defn on-path? (sys:System, path:String) -> True|False :
+;Return the index of the given path on the path list.
+;Returns false if not on the list.
+public defn find-on-path-list (sys:System, paths:Tuple<String>, path:String) -> Int|False :
   defn match? (a:String, b:String) :
     match(resolve-path(sys,a), resolve-path(sys,b)) :
       (a:String, b:String) : a == b
-      (a, b) : false
-  for sys-path in system-paths(sys) any? :
+      (a, b) : false  
+  for sys-path in paths index-when :
     match?(sys-path, path)
+
+;Returns true if the given path is on the path list.
+public defn on-path? (sys:System, path:String) -> True|False :
+  find-on-path-list(sys, system-paths(sys), path) is Int
 
 ;Try adding the given path to the system path.
 public defn add-to-path (sys:System, path:String) -> False :

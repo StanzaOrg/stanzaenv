@@ -396,6 +396,7 @@ defn try-read-state-3 () :
   val sys = MockSystem(
     ;env vars
     ["PWD" => "/users/myworkdir"
+     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin"
      "SHELL" => "bin/zsh"
      "HOME" => "/users/patricksli"]
     
