@@ -1,0 +1,4 @@
+root:
+  "src/description.txt"
+files:
+  "src"
