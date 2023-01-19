@@ -62,3 +62,23 @@ defmethod print (o:OutputStream, e:CouldNotDetectHome) :
   val msg = "Could not detect the user's $HOME directory."
   print(o, msg)
 
+;Occurs when we don't know how to set the path on this
+;platform yet.
+public defstruct CouldNotSetPathOnPlatform <: StanzaEnvError :
+  platform:Platform
+
+defmethod print (o:OutputStream, e:CouldNotSetPathOnPlatform) :
+  val msg = "Automatically setting PATH variable on platform '%_' \
+             is not currently supported."
+  print(o, msg % [platform(e)])
+
+;Occurs when we don't know how to set an environment variable on this
+;platform yet.
+public defstruct CouldNotSetVarOnPlatform <: StanzaEnvError :
+  platform:Platform
+
+defmethod print (o:OutputStream, e:CouldNotSetVarOnPlatform) :
+  val msg = "Automatically setting environment variables on platform '%_' \
+             is not currently supported."
+  print(o, msg % [platform(e)])
+

@@ -4,6 +4,15 @@ defpackage stanzaenv/system-utils :
   import stanzaenv/system-api
 
 ;============================================================
+;==================== Path Resolution =======================
+;============================================================
+
+public defn resolve-path! (s:System, path:String) -> String :
+  val resolved = resolve-path(s, path)
+  match(resolved:String) : resolved
+  else : throw(PathResolutionError(path))
+
+;============================================================
 ;===================== Temp Directories =====================
 ;============================================================
 

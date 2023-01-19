@@ -4,6 +4,7 @@ defpackage stanzaenv/install :
   import collections
   import stanzaenv/system-state
   import stanzaenv/system-api
+  import stanzaenv/system-path
   import stanzaenv/system-utils
   import stanzaenv/errors
   import stanzaenv/paths
@@ -105,7 +106,82 @@ defn fresh-install (sys:System) -> False :
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
+  initialize-system-path(sys, install-dir)
+  initialize-stanzaenv-env-var(sys, install-dir)
   install-initial-stanza-version(sys)
+
+;For a non-default installation, STANZAENV_DIR needs to be set to
+;point to the installation directory.
+defn initialize-stanzaenv-env-var (sys:System, install:EnvInstallation) -> False :
+  match(install:ConfigInstallation) :
+    try :
+      ;Retrieve the absolute path to installation directory.
+      val stanzaenv-path = resolve-path!(sys, path(install))
+      try :
+        ;Check whether it's set already.
+        val already-set? = 
+          match(get-env(sys, "STANZAENV_DIR")) :
+            (dir:String) : resolve-path(sys,dir) == stanzaenv-path
+            (f:False) : false
+        ;If not set, then set it.
+        if not already-set? :
+          val msg = "For installing to a non-default location, the STANZAENV_DIR environment \
+                     variable needs to be set. Should it be added automatically? Yes/No: "
+          if prompt-yes-no(sys, msg) :
+            add-to-system-vars(sys, "STANZAENV_DIR", stanzaenv-path)
+      catch (e) :
+        println("Failed to automatically set the STANZAENV_DIR variable.")
+        println("Please manually set STANZAENV_DIR to '%_' to complete \
+                 the installation." % [stanzaenv-path])
+    catch (e) :
+      println("Failed to automatically set the STANZAENV_DIR variable.")
+      println("Please manually set STANZAENV_DIR to point to '%_' to complete \
+               the installation." % [path(install)])
+
+;Ask the user whether STANZAENV_DIR should be set automatically.
+defn request-set-stanzaenv-dir? (sys:System) -> True|False :
+  val msg = "For installing to a non-default location, the STANZAENV_DIR environment \
+             variable needs to be set. Should it be added automatically? Yes/No: "
+  within decision = prompt-user(sys, msg) :
+    switch(lower-case(decision)) :
+      "yes" : Good(true)
+      "no" : Good(false)
+      else : Bad("Not a valid option.")
+
+;Initialize the system PATH variable to point to the right place.
+defn initialize-system-path (sys:System, install:EnvInstallation) -> False :
+  ;Retrieve the absolute directory to stanzaenv.
+  val stanzaenv-path = relative-to(path(install), relpath-to-stanzaenv())
+  try :
+    val stanzaenv-abs-path = resolve-path!(sys,stanzaenv-path)
+    try :
+      ;Retrieve the absolute directory to stanzaenv.
+      val stanzaenv-path = relative-to(path(install), relpath-to-stanzaenv())
+      val stanzaenv-abs-path = resolve-path!(sys,stanzaenv-path)
+      ;Check whether it's on the path already.
+      if on-path?(sys, stanzaenv-abs-path) :
+        println("The 'stanzaenv' directory is already on the system PATH.")
+      else :
+        val msg = "The 'stanzaenv' directory is not detected on the system PATH. \
+                   Should it be added automatically? Yes/No: "
+        if prompt-yes-no(sys, msg) :
+          add-to-path(sys, stanzaenv-abs-path)
+    catch (e) :
+      println("Failed to automatically set the system PATH: %_" % [e])
+      println("Please manually add '%_' to the PATH or else 'stanzaenv' \
+               will not be callable from the terminal." % [stanzaenv-abs-path])
+  catch (e) :
+    println("Failed to automatically set the system PATH: %_" % [e])
+    println("Please manually add '%_' to the PATH or else 'stanzaenv' \
+             will not be callable from the terminal." % [path(install)])
+
+;Ask the user a yes/no question.
+defn prompt-yes-no (sys:System, msg:String) -> True|False :
+  within decision = prompt-user(sys, msg) :
+    switch(lower-case(decision)) :
+      "yes" : Good(true)
+      "no" : Good(false)
+      else : Bad("Not a valid option.")
 
 ;Perform an initial install of the Stanza version.
 defn install-initial-stanza-version (sys:System) -> False :

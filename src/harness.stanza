@@ -1,6 +1,7 @@
 defpackage stanzaenv/harness :
   import core
   import collections
+  import core/parsed-path
   import stanzaenv/download
   import stanzaenv/unzip
   import stanzaenv/urls
@@ -216,6 +217,22 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("MockSystem: delete-recursive %~" % [folder])
     defmethod move-dir (this, oldpath:String, newpath:String) :
       println("MockSystem: move-dir(%~, %~)" % [oldpath, newpath])
+    defmethod resolve-path (this, path:String) :      
+      val ppath = parse-path(path)
+      val result = 
+        if absolute?(ppath) :
+          path
+        else :
+          match(lookup?(env-vars, "PWD")) :
+            (cwd:String) : to-string(relative-to-dir(parse-path(cwd), path))
+            (f:False) : false
+      println("MockSystem: resolve-path(%~) = %~" % [path, result])      
+      result
+    defmethod spit (this, path:String, snippet, append?:True|False) :
+      println("MockSystem: spit(%~, %~)" % [path, append?])
+      println("Contents:")
+      within indented() :
+        println(snippet)
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
       val answer = if not empty?(prompt-seq) :
@@ -240,11 +257,22 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
 
 defn try-install () :
   val sys0 = MockSystem(
-    []
+    ;env vars
+    ["SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
     ["/Applications" => DirectoryType()]
+    
+    ;prompts
     ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
      "initial version of Stanza" => ""]
+
+    ;platform
     OS-X)
+    
   install-stanzaenv(sys0)
 
 ;============================================================

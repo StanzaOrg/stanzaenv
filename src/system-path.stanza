@@ -14,7 +14,7 @@ public defn system-paths (sys:System) -> Tuple<String> :
 ;Return true if the given path is on the system path.
 public defn on-path? (sys:System, path:String) -> True|False :
   defn match? (a:String, b:String) :
-    match(resolve-path(a), resolve-path(b)) :
+    match(resolve-path(sys,a), resolve-path(sys,b)) :
       (a:String, b:String) : a == b
       (a, b) : false
   for sys-path in system-paths(sys) any? :
@@ -29,9 +29,23 @@ public defn add-to-path (sys:System, path:String) -> False :
     BashShell :
       spit(sys, user-home(sys,".bashrc"), fill-template(BASH-EXPORT), true)
     CmdExe :
-      throw(Exception("Automatically setting PATH variable in Windows not supported."))
+      throw(CouldNotSetPathOnPlatform(Windows))
     false :
       throw(CouldNotDetectShell())
+
+;Try adding the given environment variable to the system.
+public defn add-to-system-vars (sys:System, variable:String, value:String) -> False :
+  defn fill-template (template:String) : "\n\n%_" % [template % [variable, value]]    
+  switch(detect-shell(sys)) :
+    ZshShell :
+      spit(sys, user-home(sys,".zprofile"), fill-template(ZSH-SET-VAR), true)
+    BashShell :
+      spit(sys, user-home(sys,".bashrc"), fill-template(BASH-SET-VAR), true)
+    CmdExe :
+      throw(CouldNotSetVarOnPlatform(Windows))
+    false :
+      throw(CouldNotDetectShell())
+
 
 ;Return the path to the user's home directory.
 defn user-home (sys:System, file:String) -> String :
@@ -45,10 +59,22 @@ val ZSH-EXPORT = trim $ \<STR>
 export PATH="%_:$PATH"
 <STR>
 
+;Snippet to set variable
+val ZSH-SET-VAR = trim $ \<STR>
+# This is automatically added by the 'stanzaenv' installer.
+export %_="%_"
+<STR>
+
 ;Snippet to append to the end of .bashrc.
 val BASH-EXPORT = trim $ \<STR>
 # This is automatically added by the 'stanzaenv' installer.
 export PATH="%_:$PATH"
+<STR>
+
+;Snippet to set variable
+val BASH-SET-VAR = trim $ \<STR>
+# This is automatically added by the 'stanzaenv' installer.
+export %_="%_"
 <STR>
 
 ;Detect the shell that the current terminal is using.
@@ -56,7 +82,7 @@ export PATH="%_:$PATH"
 public defn detect-shell (sys:System) -> Shell|False :
   match(get-env(sys, "SHELL")) :
     (str:String) :
-      switch contains?{str, _} :
+      switch substring?{str, _} :
         "zsh" : ZshShell
         "bash" : BashShell
         else : false
