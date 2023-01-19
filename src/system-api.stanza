@@ -28,3 +28,4 @@ public defmulti prompt-user (s:System, prompt:String) -> String
 
 public defmulti move-dir (s:System, old-path:String, new-path:String) -> False
 
+public defmulti spit (s:System, filename:String, snippet, append?:True|False) -> False

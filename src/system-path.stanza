@@ -1,6 +1,9 @@
 defpackage stanzaenv/system-path :
   import core
   import collections
+  import core/parsed-path
+  import stanzaenv/system-api
+  import stanzaenv/errors
 
 ;Retrieve the tuple of paths on the system PATH.
 public defn system-paths (sys:System) -> Tuple<String> :
@@ -10,9 +13,60 @@ public defn system-paths (sys:System) -> Tuple<String> :
 
 ;Return true if the given path is on the system path.
 public defn on-path? (sys:System, path:String) -> True|False :
-  val resolved-path =
-    match(resolve-path(path)) :
-      (resolved:String) :
-        resolved
-      (f:False) :
-        
+  defn match? (a:String, b:String) :
+    match(resolve-path(a), resolve-path(b)) :
+      (a:String, b:String) : a == b
+      (a, b) : false
+  for sys-path in system-paths(sys) any? :
+    match?(sys-path, path)
+
+;Try adding the given path to the system path.
+public defn add-to-path (sys:System, path:String) -> False :
+  defn fill-template (template:String) : "\n\n%_" % [template % [path]]    
+  switch(detect-shell(sys)) :
+    ZshShell :
+      spit(sys, user-home(sys,".zprofile"), fill-template(ZSH-EXPORT), true)
+    BashShell :
+      spit(sys, user-home(sys,".bashrc"), fill-template(BASH-EXPORT), true)
+    CmdExe :
+      throw(Exception("Automatically setting PATH variable in Windows not supported."))
+    false :
+      throw(CouldNotDetectShell())
+
+;Return the path to the user's home directory.
+defn user-home (sys:System, file:String) -> String :
+  match(get-env(sys, "HOME")) :
+    (home:String) : string-join([home "/" file])
+    (f:False) : throw(CouldNotDetectHome())
+
+;Snippet to append to the end of .zprofile.
+val ZSH-EXPORT = trim $ \<STR>
+# This is automatically added by the 'stanzaenv' installer.
+export PATH="%_:$PATH"
+<STR>
+
+;Snippet to append to the end of .bashrc.
+val BASH-EXPORT = trim $ \<STR>
+# This is automatically added by the 'stanzaenv' installer.
+export PATH="%_:$PATH"
+<STR>
+
+;Detect the shell that the current terminal is using.
+;Returns false if we failed to detect the shell.
+public defn detect-shell (sys:System) -> Shell|False :
+  match(get-env(sys, "SHELL")) :
+    (str:String) :
+      switch contains?{str, _} :
+        "zsh" : ZshShell
+        "bash" : BashShell
+        else : false
+    (f:False) :
+      if current-platform(sys) == Windows : CmdExe
+      else : false
+
+;Represents the different recognized shells.
+public defenum Shell :
+  ZshShell
+  BashShell
+  CmdExe
+

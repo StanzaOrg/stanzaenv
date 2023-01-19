@@ -45,3 +45,20 @@ defmethod print (o:OutputStream, e:BadDefaultInstallation) :
   val msg = "The stanzaenv installation at the default location %~ is corrupted. \
              No 'stanzaenv' executable found."
   print(o, msg % [path(e)])
+
+;Occurs when we were unable to detect the shell
+;that is running.
+public defstruct CouldNotDetectShell <: StanzaEnvError
+  
+defmethod print (o:OutputStream, e:CouldNotDetectShell) :
+  val msg = "Could not detect the current shell."
+  print(o, msg)
+
+;Occurs when we were unable to detect the user's
+;HOME directory.
+public defstruct CouldNotDetectHome <: StanzaEnvError
+  
+defmethod print (o:OutputStream, e:CouldNotDetectHome) :
+  val msg = "Could not detect the user's $HOME directory."
+  print(o, msg)
+
