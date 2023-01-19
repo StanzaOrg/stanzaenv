@@ -53,6 +53,11 @@ public defn make-temp-dirs<?T> (body:TempDirs -> ?T, sys:System, dir:String) -> 
     body(temp-dirs)
   finally :
     delete-all-temp-dirs()
+
+;Convenience: Create only a single temporary directory.
+public defn make-temp-dir<?T> (body:String -> ?T, sys:System, dir:String) -> T :
+  within dirs = make-temp-dirs(sys, dir) :
+    body(temp-dir(dirs))
   
 ;============================================================
 ;===================== Prompter =============================

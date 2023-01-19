@@ -1,10 +1,21 @@
 defpackage stanzaenv/install-version :
   import core
   import collections
-  import stanzaenv/system-state
+  import stanzaenv/versions
   import stanzaenv/system-api
+  import stanzaenv/system-utils
+  import stanzaenv/paths
+  import stanzaenv/urls
 
 ;Download the given Stanza version.
 ;Assumes that it's not already installed.
-public defn install-stanza-version (sys:System, v:NamedVersion) -> False :
-  fatal("Not implemented")
+public defn install-stanza-version (sys:System,
+                                    v:NamedVersion,
+                                    root:String) -> False :
+  within temp = make-temp-dir(sys, stanzaenv-temp-dir(root)) :
+    val url = stanza-zipfile-url(current-platform(sys), v)
+    val zip-path = relative-to(temp, "stanza.zip")
+    download-to-file(sys, url, zip-path)
+    unzip-to-folder(sys, zip-path, relative-to(temp, "stanza"))
+    move-dir(sys, relative-to(temp, "stanza"), stanza-version-path(root, v))
+    println("Successfully installed Stanza %_." % [v])

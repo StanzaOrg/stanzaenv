@@ -2,6 +2,7 @@ defpackage stanzaenv/system-state :
   import core
   import collections
   import stz/printing-utils
+  import stanzaenv/versions
 
 ;============================================================
 ;==================== State Representation ==================
@@ -21,17 +22,6 @@ public defstruct SystemState :
 public defstruct ProjectVersion :
   filename: String
   version: VersionSpecifier
-
-;Represents a Stanza version.
-public deftype VersionSpecifier
-
-;Represents a named Stanza version: e.g. 0.14.33
-public defstruct NamedVersion <: VersionSpecifier :
-  value: [Int, Int, Int]
-
-;Represents a local Stanza version: e.g. "mydir/tempstanza"
-public defstruct LocalVersion <: VersionSpecifier :
-  path: String
 
 ;Represents the location where stanzaenv is installed.
 public deftype EnvInstallation

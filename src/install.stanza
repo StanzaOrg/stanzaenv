@@ -98,9 +98,8 @@ defn fresh-install (sys:System) -> False :
   ;Install the initial version of Stanza.
   val install-dir = request-install-dir(sys)
   val parent-dir = parent-dir(path(install-dir)) as String
-  within temp-dirs = make-temp-dirs(sys, parent-dir) :    
+  within temp = make-temp-dir(sys, parent-dir) :    
     val url = stanzaenv-zip-url(current-platform(sys))
-    val temp = temp-dir(temp-dirs)
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
     download-to-file(sys, url, stanzaenv-zip)    
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
@@ -108,7 +107,7 @@ defn fresh-install (sys:System) -> False :
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
   initialize-stanzaenv-env-var(sys, install-dir)
-  install-initial-stanza-version(sys)
+  install-initial-stanza-version(sys, path(install-dir))
 
 ;For a non-default installation, STANZAENV_DIR needs to be set to
 ;point to the installation directory.
@@ -184,14 +183,10 @@ defn prompt-yes-no (sys:System, msg:String) -> True|False :
       else : Bad("Not a valid option.")
 
 ;Perform an initial install of the Stanza version.
-defn install-initial-stanza-version (sys:System) -> False :
+defn install-initial-stanza-version (sys:System, root:String) -> False :
   val version = request-initial-version(sys)
   match(version) :
     (version:NamedVersion) :
-      install-stanza-version(sys, version)
+      install-stanza-version(sys, version, root)
     (version:False) :
       println("Leaving Stanza uninstalled.")  
-
-;Return a new path where the relative path is relative to the given directory.
-defn relative-to (dir:String, path:String) -> String :
-  to-string(relative-to-dir(parse-path(dir), path))

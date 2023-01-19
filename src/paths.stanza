@@ -1,6 +1,8 @@
 defpackage stanzaenv/paths :
   import core
+  import core/parsed-path
   import stanzaenv/system-api
+  import stanzaenv/versions
 
 ;Relative path to stanzaenv executable.
 public defn relpath-to-stanzaenv () :
@@ -13,3 +15,21 @@ public defn default-installation-dir (sys:System) -> String|False :
   val home = get-env(sys, "HOME")
   match(home:String) :
     string-join([home "/.stanzaenv"])
+
+;Return the path to the Stanza directory.
+public defn stanza-version-path (stanzaenv-root:String, version:NamedVersion) -> String :
+  val [a,b,c] = value(version)
+  val relpath = to-string("stanza/v%_.%_.%_" % [a,b,c])
+  relative-to(stanzaenv-root, relpath)
+
+;Return the path to the stanzaenv temp directory.
+public defn stanzaenv-temp-dir (stanzaenv-root:String) -> String :
+  relative-to(stanzaenv-root, "temp")
+
+;============================================================
+;====================== Path Utilities ======================
+;============================================================
+
+;Return a new path where the relative path is relative to the given directory.
+public defn relative-to (dir:String, path:String) -> String :
+  to-string(relative-to-dir(parse-path(dir), path))

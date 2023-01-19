@@ -8,6 +8,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/system-state
   import stanzaenv/install
   import stanzaenv/system-api
+  import stanzaenv/versions
 
 ;============================================================
 ;================ Testing System States =====================
@@ -255,8 +256,9 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
 ;==================== Try Out Install =======================
 ;============================================================
 
-defn try-install () :
-  val sys0 = MockSystem(
+;Does not install Stanza at the end.
+defn try-install-0 () :
+  val sys = MockSystem(
     ;env vars
     ["SHELL" => "bin/zsh"
      "HOME" => "/users/patricksli"]
@@ -273,16 +275,36 @@ defn try-install () :
     ;platform
     OS-X)
     
-  install-stanzaenv(sys0)
+  install-stanzaenv(sys)
+
+;Tries to install Stanza at the end.
+defn try-install-1 () :
+  val sys = MockSystem(
+    ;env vars
+    ["SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()]
+    
+    ;prompts
+    ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => "0.17.52"]
+
+    ;platform
+    OS-X)
+    
+  install-stanzaenv(sys)
 
 ;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
-defn main () :
-  try-install()
+
   
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-main()
+try-install-1()

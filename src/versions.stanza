@@ -3,6 +3,25 @@ defpackage stanzaenv/versions :
   import collections
   import stanzaenv/system-state
 
+;============================================================
+;===================== Representation =======================
+;============================================================
+
+;Represents a Stanza version.
+public deftype VersionSpecifier
+
+;Represents a named Stanza version: e.g. 0.14.33
+public defstruct NamedVersion <: VersionSpecifier :
+  value: [Int, Int, Int]
+
+;Represents a local Stanza version: e.g. "mydir/tempstanza"
+public defstruct LocalVersion <: VersionSpecifier :
+  path: String
+
+;============================================================
+;======================= Parsing ============================
+;============================================================
+
 ;Parses the named version given by the given string.
 ;Returns false if doesn't parse.
 public defn parse-named-version (str:String) -> NamedVersion|False :
