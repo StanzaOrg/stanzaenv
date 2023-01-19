@@ -1,0 +1,52 @@
+## Source Files ##
+
+Development:
+
+  @[file:harness.stanza] Main development entry point.
+
+Main State:
+
+  @[file:system-state.stanza] Represents the entire state of the environment.
+
+Main Flow:
+
+  @[file:install.stanza] Installation flow for stanzaenv.
+
+  @[file:install-version.stanza] Installation flow for installing specific version of Stanza.
+
+  @[file:system-path.stanza] Installation flow for managing system PATH settings.
+
+Errors:
+
+  @[file:errors.stanza] Contains all errors relevant to stanzaenv.
+
+Abstract System:
+
+  @[file:system-api.stanza] Abstract interface for exposing system functionality.
+
+  @[file:system-utils.stanza] Utilities built on the System API.
+
+Hardcoded Strings:
+
+  @[file:paths.stanza] Retrieve all important paths needed by stanzaenv.
+
+  @[file:urls.stanza] Retrieve all import URLs needed by stanzaenv.
+
+Standalone System Functionality:
+
+  @[file:unzip.stanza] Handles how to unzip a zip file.
+
+  @[file:download.stanza] Handles how to download from a URL.
+
+  @[file:versions.stanza] Small utilities for handling version strings.
+
+## Curl Bindings ##
+
+@[file:lib-curl/curl.c]
+@[file:lib-curl/lib-curl.stanza]
+@[file:lib-curl/stanza.proj]
+
+## LibZip Bindings ##
+
+@[file:lib-zip/lib-zip.stanza]
+@[file:lib-zip/stanza.proj]
