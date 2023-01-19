@@ -31,3 +31,5 @@ public defmulti move-dir (s:System, old-path:String, new-path:String) -> False
 public defmulti spit (s:System, filename:String, snippet, append?:True|False) -> False
 
 public defmulti resolve-path (s:System, path:String) -> String|False
+
+public defmulti read-file (s:System, path:String) -> ?

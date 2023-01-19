@@ -91,3 +91,28 @@ defmethod print (o:OutputStream, e:ConfigSyntaxError) :
   val info-str = "" when info(e) is False else "%_: " % [info(e)]
   print(o, "%_%_" % [info-str, msg(e)])
 
+;Occurs when the configuration file is ill-formed.
+public defstruct ConfigFileError <: StanzaEnvError :
+  msg
+
+defmethod print (o:OutputStream, e:ConfigFileError) :
+  print(o, msg(e))
+
+;Occurs when 'stanzaenv' is not installed, and some operation
+;was performed that depends upon it.
+public defstruct StanzaenvNotInstalled <: StanzaEnvError
+
+defmethod print (o:OutputStream, e:StanzaenvNotInstalled) :
+  print(o, "Stanzaenv is not yet installed.")
+
+;Occurs when we were unable to read the system state.
+public defstruct SystemStateError <: StanzaEnvError :
+  error:Exception
+
+defmethod print (o:OutputStream, e:SystemStateError) :
+  print(o, "Unable to read the system state: %_" % [error(e)])
+
+;Helper utility for wrapping a body and wrapping up any thrown exception.
+public defn wrap-error<?T> (body:() -> ?T, Error:Exception -> Exception) -> T :
+  try : body()
+  catch (e) : throw(Error(e))

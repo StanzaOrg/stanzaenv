@@ -1,6 +1,7 @@
 defpackage stanzaenv/config-syntax :
   import core
   import collections
+  import stanzaenv/system-api
   import stanzaenv/config
   import stanzaenv/versions
   import stanzaenv/errors
@@ -14,8 +15,8 @@ public defn parse-config-file (forms) -> ConfigFile :
   parse-syntax[stanzaenv-syntax / #config-file](forms)
 
 ;Read a stanzaenv config file.
-public defn read-config-file (file:String) -> ConfigFile :
-  parse-config-file(reader/read-file(file))
+public defn read-config-file (sys:System, file:String) -> ConfigFile :
+  parse-config-file(read-file(sys,file))
 
 ;============================================================
 ;=================== Syntax Definition ======================
@@ -26,7 +27,9 @@ defsyntax stanzaenv-syntax :
   ;Read a config file.
   public defproduction config-file:ConfigFile
   defrule config-file = (?stmts:#stmt! ...) :
-    ConfigFile(to-tuple(stmts))
+    val file = ConfigFile(to-tuple(stmts))
+    validate(file)
+    file
 
   ;Represents the version specifier. 
   defproduction version: VersionSpecifier

@@ -5,8 +5,16 @@ defpackage stanzaenv/paths :
   import stanzaenv/versions
 
 ;Relative path to stanzaenv executable.
-public defn relpath-to-stanzaenv () :
+public defn relpath-to-stanzaenv () -> String :
   "bin/stanzaenv"
+
+;Name of the stanza version configuration file.
+public defn project-config-file () -> String :
+  ".stanza-version"
+
+;Name of the global stanzaenv configuration file.
+public defn global-config-file (root:String) -> String :
+  relative-to(root, "stanzaenv.config")
 
 ;Retrieve the default installation directory.
 ;1) First try $HOME/.stanzaenv

@@ -189,8 +189,11 @@ defn print-states () :
 ;==================== Mock System ===========================
 ;============================================================
 
+defstruct MockFile :
+  contents:String
+
 defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
-                 existing-files:Tuple<KeyValue<String,FileType>>,
+                 existing-files:Tuple<KeyValue<String,FileType|MockFile>>,
                  prompts:Tuple<KeyValue<String,String>>,
                  platform:Platform) -> System :
   val prompt-seq = to-seq(prompts)  
@@ -236,6 +239,13 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("Contents:")
       within indented() :
         println(snippet)
+    defmethod read-file (this, path:String) :
+      println("MockSystem: read-file(%~)" % [path])
+      val entry = lookup?(existing-files, path)
+      match(entry:MockFile) :
+        reader/read-all(contents(entry))
+      else :
+        throw(Exception("Failed to read %~." % [path]))
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
       val answer = if not empty?(prompt-seq) :
@@ -340,7 +350,7 @@ defn try-parse-config-4 () :
 ;===================== Try Out Read State ===================
 ;============================================================
 
-defn try-read-state () :
+defn try-read-state-1 () :
   val sys = MockSystem(
     ;env vars
     ["SHELL" => "bin/zsh"
@@ -348,6 +358,52 @@ defn try-read-state () :
     
     ;existing files
     ["/Applications" => DirectoryType()]
+    
+    ;prompts
+    ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => ""]
+
+    ;platform
+    OS-X)
+  system-state(sys)
+
+defn try-read-state-2 () :
+  val sys = MockSystem(
+    ;env vars
+    ["PWD" => "/users/myworkdir"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()]
+    
+    ;prompts
+    ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => ""]
+
+    ;platform
+    OS-X)
+  system-state(sys)
+
+defn try-read-state-3 () :
+  val global-config = \<STR>
+    stanza-version: "0.17.52"
+  <STR>
+  val sys = MockSystem(
+    ;env vars
+    ["PWD" => "/users/myworkdir"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()
+     "/users/patricksli/.stanzaenv" => DirectoryType()
+     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
     
     ;prompts
     ["installed in" => "/Applications/stanzaenv"
@@ -368,5 +424,5 @@ defn try-read-state () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-try-parse-config-4()
-;try-read-state()
+;try-parse-config-4()
+try-read-state-3()

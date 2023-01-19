@@ -14,7 +14,7 @@ defpackage stanzaenv/system-state :
 public defstruct SystemState :
   project-version:ProjectVersion|False
   installation:EnvInstallation
-  global-version:VersionSpecifier
+  global-version:VersionSpecifier|False
   path-status:PathStatus
   installed-versions:Tuple<InstalledStanza>
 
