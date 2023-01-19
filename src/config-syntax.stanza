@@ -1,10 +1,62 @@
 defpackage stanzaenv/config-syntax :
   import core
   import collections
+  import stanzaenv/config
+  import stanzaenv/versions
+  import stanzaenv/errors
 
 ;============================================================
+;======================== API ===============================
 ;============================================================
+
+;Parse a stanzaenv config file.
+public defn parse-config-file (forms) -> ConfigFile :
+  parse-syntax[stanzaenv-syntax / #config-file](forms)
+
+;Read a stanzaenv config file.
+public defn read-config-file (file:String) -> ConfigFile :
+  parse-config-file(reader/read-file(file))
+
 ;============================================================
-;
-;defsyntax stanzaenv-syntax :
-;  
+;=================== Syntax Definition ======================
+;============================================================
+
+defsyntax stanzaenv-syntax :
+
+  ;Read a config file.
+  public defproduction config-file:ConfigFile
+  defrule config-file = (?stmts:#stmt! ...) :
+    ConfigFile(to-tuple(stmts))
+
+  ;Represents the version specifier. 
+  defproduction version: VersionSpecifier
+  defrule version = (system) :
+    SystemVersion()
+  defrule version = (local ?path:#string!) :
+    LocalVersion(path)
+  defrule version = (?version-str:#string!) :
+    match(parse-named-version(version-str)) :
+      (v:NamedVersion) : v
+      (f:False) : throw(ConfigSyntaxError(closest-info(), "Invalid version string."))
+
+  ;Represents possible statements in the config file.
+  defproduction stmt: ConfigStmt
+  defrule stmt = (stanza-version: ?v:#version!) :
+    VersionStmt(v)
+
+  ;Primitive productions
+  defproduction string: String
+  defrule string = (?x) when unwrap-token(x) is String : unwrap-token(x)
+
+  ;Error productions
+  defproduction version!: VersionSpecifier
+  defrule version! = (?v:#version)
+  fail-if version! = () : ConfigSyntaxError(closest-info(), "Invalid version specifier.")
+
+  defproduction stmt!: ConfigStmt
+  defrule stmt! = (?v:#stmt)
+  fail-if stmt! = () : ConfigSyntaxError(closest-info(), "Invalid configuration file statement.")
+
+  defproduction string!: String
+  defrule string! = (?v:#string)
+  fail-if string! = () : ConfigSyntaxError(closest-info(), "String expected here.")

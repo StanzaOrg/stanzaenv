@@ -18,6 +18,23 @@ public defstruct NamedVersion <: VersionSpecifier :
 public defstruct LocalVersion <: VersionSpecifier :
   path: String
 
+;Represents the system version of Stanza. 
+public defstruct SystemVersion <: VersionSpecifier
+
+;============================================================
+;==================== Printers ==============================
+;============================================================
+
+defmethod print (o:OutputStream, v:SystemVersion) :
+  print(o, "system")
+
+defmethod print (o:OutputStream, v:LocalVersion) :
+  print(o, "local %~" % [path(v)])
+
+defmethod print (o:OutputStream, v:NamedVersion) :
+  val [a b c] = value(v)
+  print(o, "%_.%_.%_" % [a, b, c])
+
 ;============================================================
 ;======================= Parsing ============================
 ;============================================================

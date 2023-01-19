@@ -10,6 +10,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
+  import stanzaenv/config-syntax
 
 ;============================================================
 ;================ Testing System States =====================
@@ -300,6 +301,42 @@ defn try-install-1 () :
   install-stanzaenv(sys)
 
 ;============================================================
+;================== Try parsing config file =================
+;============================================================
+
+defn print-errors (body:() -> ?) :
+  try: body()
+  catch (e) : println(e)
+
+defn try-parse-config-1 () :
+  val str = \<STR>
+  version: "0.1"
+  <STR>
+  within print-errors() :
+    parse-config-file(reader/read-all(str))
+
+defn try-parse-config-2 () :
+  val str = \<STR>
+  stanza-version: "0.1.17"
+  <STR>
+  within print-errors() :
+    parse-config-file(reader/read-all(str))
+
+defn try-parse-config-3 () :
+  val str = \<STR>
+  stanza-version: local "mypath"
+  <STR>
+  within print-errors() :
+    parse-config-file(reader/read-all(str))
+
+defn try-parse-config-4 () :
+  val str = \<STR>
+  stanza-version: system
+  <STR>
+  within print-errors() :
+    parse-config-file(reader/read-all(str))
+
+;============================================================
 ;===================== Try Out Read State ===================
 ;============================================================
 
@@ -331,4 +368,5 @@ defn try-read-state () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-try-read-state()
+try-parse-config-4()
+;try-read-state()

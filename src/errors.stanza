@@ -82,3 +82,12 @@ defmethod print (o:OutputStream, e:CouldNotSetVarOnPlatform) :
              is not currently supported."
   print(o, msg % [platform(e)])
 
+;Occurs when the configuration file is ill-formed.
+public defstruct ConfigSyntaxError <: StanzaEnvError :
+  info:FileInfo|False
+  msg
+
+defmethod print (o:OutputStream, e:ConfigSyntaxError) :
+  val info-str = "" when info(e) is False else "%_: " % [info(e)]
+  print(o, "%_%_" % [info-str, msg(e)])
+

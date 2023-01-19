@@ -80,13 +80,6 @@ defmethod print (o:OutputStream, s:ConfigInstallation) :
 defmethod print (o:OutputStream, s:DefaultInstallation) :
   print(o, "Installed to %_" % [path(s)])
 
-defmethod print (o:OutputStream, v:LocalVersion) :
-  print(o, "local %~" % [path(v)])
-
-defmethod print (o:OutputStream, v:NamedVersion) :
-  val [a b c] = value(v)
-  print(o, "%_.%_.%_" % [a, b, c])
-
 defmethod print (o:OutputStream, v:ProjectVersion) :
   print(o, "Version: %_" % [version(v)])
   lnprint(o, "Configured by: %~" % [filename(v)])

@@ -1,0 +1,20 @@
+defpackage stanzaenv/config :
+  import core
+  import collections
+  import stanzaenv/versions
+
+;============================================================
+;====================== Representation ======================
+;============================================================
+
+;Represents the config file.
+public defstruct ConfigFile :
+  stmts:Tuple<ConfigStmt>
+
+;Represents a line in the config file.
+public deftype ConfigStmt
+
+;Sets the version in the config file.
+public defstruct VersionStmt <: ConfigStmt :
+  version:VersionSpecifier
+
