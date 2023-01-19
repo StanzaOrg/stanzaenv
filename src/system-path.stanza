@@ -1,0 +1,18 @@
+defpackage stanzaenv/system-path :
+  import core
+  import collections
+
+;Retrieve the tuple of paths on the system PATH.
+public defn system-paths (sys:System) -> Tuple<String> :
+  match(get-env(sys, "PATH")) :
+    (str:String) : to-tuple(split(str, ":"))
+    (f:False) : []
+
+;Return true if the given path is on the system path.
+public defn on-path? (sys:System, path:String) -> True|False :
+  val resolved-path =
+    match(resolve-path(path)) :
+      (resolved:String) :
+        resolved
+      (f:False) :
+        
