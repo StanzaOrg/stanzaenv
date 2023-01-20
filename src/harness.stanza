@@ -539,6 +539,7 @@ defn try-filetree-3 () :
   spit(tree, "mylog.txt", "event 1\n", true)
   spit(tree, "mylog.txt", "event 2\n", true)
   spit(tree, "mylog.txt", "event 3\n", true)
+  change-dir(tree, "config")
   println(tree)
   println(slurp(tree, "/config.dash2"))
 

@@ -33,6 +33,9 @@ public defmulti slurp (tree:FileTree, path:String) -> String
 ;Write to the given path.
 public defmulti spit (tree:FileTree, path:String, contents:String, append?:True|False) -> False
 
+;Change the working directory.
+public defmulti change-dir (tree:FileTree, path:String) -> False
+
 ;============================================================
 ;================ Creation of File Tree =====================
 ;============================================================
@@ -133,6 +136,16 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
             set-type(node, MockFile(to-string(contents)))
         (f:False) :
           set(tree, resolved, MockFile(to-string(contents)))
+
+    defmethod change-dir (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolved)) :
+        (n:TreeNode) :
+          if type(n) is-not Directory :
+            throw(FileTreeError("Path %~ is not a directory." % [resolved]))
+        (f:False) :
+          throw(FileTreeError("No such directory: %_." % [resolved]))
+      workdir = resolved        
 
 ;============================================================
 ;=================== File Representation ====================
