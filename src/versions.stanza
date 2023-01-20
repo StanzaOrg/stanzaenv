@@ -35,6 +35,9 @@ defmethod print (o:OutputStream, v:NamedVersion) :
   val [a b c] = value(v)
   print(o, "%_.%_.%_" % [a, b, c])
 
+defmethod write (o:OutputStream, v:NamedVersion) :
+  print(o, "\"%_\"" % [v])
+
 ;============================================================
 ;======================= Parsing ============================
 ;============================================================

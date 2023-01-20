@@ -10,6 +10,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
+  import stanzaenv/set-version
   import stanzaenv/config-syntax
 
 ;============================================================
@@ -458,6 +459,42 @@ defn try-read-state-4 () :
     println(system-state(sys))
 
 ;============================================================
+;=================== Set Version ============================
+;============================================================
+
+defn try-set-state-1 () :
+  val global-config = \<STR>
+    stanza-version: "0.17.50"
+  <STR>
+  val sys = MockSystem(
+    ;env vars
+    ["PWD" => "/users/myworkdir"
+     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"
+     "STANZAENV_DIR" => "/Applications/stanzaenv"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()
+     "/Applications/stanzaenv" => DirectoryType()
+     "/Applications/stanzaenv/bin/stanzaenv" => RegularFileType()
+     "/Applications/stanzaenv/stanzaenv.config" => MockFile(global-config)
+     "/Applications/stanzaenv/stanza/v0.5.4" => DirectoryType()
+     "/Applications/stanzaenv/stanza/v0.5.3" => DirectoryType()
+     "/Applications/stanzaenv/stanza/v0.5.2" => DirectoryType()
+     "/users/patricksli/.stanzaenv" => DirectoryType()
+     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
+    
+    ;prompts
+    []
+
+    ;platform
+    OS-X)
+  within print-errors() :
+    println(set-global-stanza-version(sys, NamedVersion([0 17 50]), system-state(sys)))  
+
+;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
@@ -466,8 +503,10 @@ defn try-read-state-4 () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
+;try-install-1()
 ;try-parse-config-4()
-try-read-state-1()
-try-read-state-2()
-try-read-state-3()
-try-read-state-4()
+;try-read-state-1()
+;try-read-state-2()
+;try-read-state-3()
+;try-read-state-4()
+try-set-state-1()
