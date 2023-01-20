@@ -12,6 +12,7 @@ defpackage stanzaenv/install :
   import stanzaenv/urls
   import stanzaenv/install-version
   import stanzaenv/versions
+  import stanzaenv/set-version
 
 ;Main entry point: Install the 'stanzaenv' system.
 ;Will detect whether already installed.
@@ -166,5 +167,6 @@ defn install-initial-stanza-version (sys:System, root:String) -> False :
   match(version) :
     (version:NamedVersion) :
       install-stanza-version(sys, version, root)
+      set-global-stanza-version(sys, version, system-state(sys))
     (version:False) :
       println("Leaving Stanza uninstalled.")  

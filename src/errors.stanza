@@ -112,6 +112,13 @@ public defstruct SystemStateError <: StanzaEnvError :
 defmethod print (o:OutputStream, e:SystemStateError) :
   print(o, "Unable to read the system state: %_" % [error(e)])
 
+;Occurs when we were unable to read the system state.
+public defstruct ConfigChangeError <: StanzaEnvError :
+  error:Exception
+
+defmethod print (o:OutputStream, e:ConfigChangeError) :
+  print(o, "Unable to change the Stanzaenv configuration: %_" % [error(e)])
+
 ;Helper utility for wrapping a body and wrapping up any thrown exception.
 public defn wrap-error<?T> (body:() -> ?T, Error:Exception -> Exception) -> T :
   try : body()
