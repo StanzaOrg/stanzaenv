@@ -1,0 +1,295 @@
+defpackage stanzaenv/filetree :
+  import core
+  import collections
+  import core/parsed-path
+  import stz/printing-utils
+
+;============================================================
+;====================== Representation ======================
+;============================================================
+
+;Represents a mock system for testing directory structure
+;manipulations.
+public deftype FileTree
+
+;Delete the item at the given path.
+public defmulti delete (tree:FileTree, path:String) -> False
+
+;Add the given item to the tree.
+public defmulti add (tree:FileTree, content:KeyValue<String,String>|String) -> False
+
+;Retrieve the directory/file at the given path as a tree node.
+public defmulti get (tree:FileTree, path:String) -> TreeNode
+
+;Return true if the path exists.
+public defmulti exists? (tree:FileTree, path:String) -> True|False
+
+;Rename the file.
+public defmulti rename (tree:FileTree, oldpath:String, newpath:String) -> False
+
+;Read the file at the given location.
+public defmulti slurp (tree:FileTree, path:String) -> String
+
+;Write to the given path.
+public defmulti spit (tree:FileTree, path:String, contents:String, append?:True|False) -> False
+
+;============================================================
+;================ Creation of File Tree =====================
+;============================================================
+
+public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
+                      initial-working-dir:String) :
+
+  ;Initialize the working directory.
+  var workdir = parse-path(initial-working-dir)
+  if not absolute?(workdir) :
+    fatal("Working directory %~ is not absolute." % [initial-working-dir])
+
+  ;Path resolution.
+  defn resolve (path:ParsedPath) -> ParsedPath :
+    relative-to-dir(workdir, path)
+  defn resolve (path:String) -> ParsedPath :
+    resolve(parse-path(path))
+                      
+  ;Holds the tree for representing the directory structure.
+  val tree = TreeNode(Root(), Directory())
+
+  ;Add a new entry to the tree.
+  defn add-content (entry:KeyValue<String,String>|String) -> False :
+    defn add-content (path:String, content:String) :
+      val file = if suffix?(path, "/") : Directory()
+                 else : MockFile(content)
+      set(tree, resolve(path), file)
+    match(entry) :
+      (entry:KeyValue<String,String>) : add-content(key(entry), value(entry))
+      (entry:String) : add-content(entry, "")
+
+  ;Initialize the tree.
+  set(tree, workdir, Directory())
+  do(add-content, contents)  
+
+  ;Create the file tree.
+  new FileTree :
+    defmethod print (o:OutputStream, this) :
+      val items = [
+        "working-directory: %_" % [workdir]
+        tree]
+      print(o, "FileTree%_" % [colon-field-list(items)])
+
+    defmethod delete (this, path:String) :
+      val resolved = resolve(path)
+      if enclosed?(resolved, workdir) :
+        throw(FileTreeError("Cannot delete %~. Working directory is within that directory." % [path]))
+      delete(tree, resolved)
+
+    defmethod add (this, content:KeyValue<String,String>|String) :
+      add-content(content)
+
+    defmethod get (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolved)) :
+        (node:TreeNode) : node
+        (f:False) : throw(FileTreeError("No such file: %_." % [resolved]))
+  
+    defmethod exists? (this, path:String) :
+      get?(tree, resolve(path)) is-not False
+
+    defmethod rename (this, oldpath:String, newpath:String) :
+      ;Throw an error if the destination already exists.
+      if exists?(this, newpath) :
+        throw(FileTreeError("There is already a file/directory at the destination: %~." % [resolve(newpath)]))
+        
+      ;Remove it from its old location.
+      val subtree = this[oldpath]
+      delete(this,oldpath)
+
+      ;Rename the subtree.
+      val resolved = resolve(newpath)
+      set-name(subtree, leaf-name(resolved))
+
+      ;Move it to the new location.
+      add(tree, enclosing-dir(resolved), subtree)
+
+    defmethod slurp (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolve(path))) :
+        (node:TreeNode) :
+          if type(node) is-not MockFile :
+            throw(FileTreeError("Path %~ does not point to a file." % [resolved]))
+          /contents(type(node) as MockFile)          
+        (f:False) :
+          throw(FileTreeError("No such file: %_." % [resolved]))
+
+    defmethod spit (this, path:String, contents, append?:True|False) :
+      val resolved = resolve(path)
+      match(get?(tree, resolve(path))) :
+        (node:TreeNode) :
+          if type(node) is-not MockFile :
+            throw(FileTreeError("Path %~ does not point to a file." % [resolved]))
+          if append?:
+            val old-contents = /contents(type(node) as MockFile)
+            set-type(node, MockFile(string-join([old-contents, contents])))
+          else :
+            set-type(node, MockFile(to-string(contents)))
+        (f:False) :
+          set(tree, resolved, MockFile(to-string(contents)))
+
+;============================================================
+;=================== File Representation ====================
+;============================================================
+
+;Representation of types of files in the file tree.
+deftype File
+
+;Represents a file with some contents.
+defstruct MockFile <: File :
+  contents:String
+
+;Represents a directory with some contents.
+defstruct Directory <: File
+
+;============================================================
+;====================== Tree Data ===========================
+;============================================================
+
+;Node representation:
+;  myroot/
+;    a/
+;      c.txt
+;      d.mock
+;    b/
+;    c/
+
+;For representing each node in the tree.
+defstruct TreeNode :
+  name: String|Root with: (setter => set-name)
+  type: File with: (setter => set-type)
+  children: HashTable<String,TreeNode> with:
+    init => HashTable<String,TreeNode>()
+
+;Printing the tree node.
+defmethod print (o:OutputStream, node:TreeNode) :
+  defn format (n:TreeNode) :
+    match(type(n)) :
+      (d:Directory) :
+        val name-str = match(name(n)) :
+          (name:String) : string-join([name, "/"])
+          (name:Root) : "/"
+        "%_%_" % [name-str, indented-field-list(values(children(n)))]
+      (f:MockFile) :
+        name(n)
+  print(o, format(node))
+        
+;For representing the name of the root.
+defstruct Root
+
+;Return the node pointed to by the given path.
+;If intermediate nodes are not directories, then
+;they are forced to be directories.
+defn create-path (node:TreeNode,
+                  path:ParsedPath) -> TreeNode :
+  fatal("Not absolute") when not absolute?(path)
+  val n = length(entries(path))
+  if n >= 2 :
+    let loop (parent:TreeNode = node, i:Int = 1) :
+      ;Retrieve name at that index in the path.
+      val name = name(entries(path)[i] as NamedPath)
+      ;Is there an existing directory at that location.
+      val existing-dir? = match(get?(children(parent), name)) :
+        (node:TreeNode) : node when type(node) is Directory
+        (f:False) : false
+      ;If there is no existing directory, then force one.
+      val dir =
+        match(existing-dir?:TreeNode) :
+          existing-dir?
+        else :
+          val d = TreeNode(name, Directory())
+          children(parent)[name] = d
+          d
+      ;If this is the last item in the path, then return
+      ;this directory, otherwise continue looping.
+      if i == n - 1 : dir
+      else : loop(dir, i + 1)
+  else :
+    node
+
+;Add a new entry to the given node.
+;e.g. /Applications/myapp/build => File
+
+;Set the given item to be a file.
+defn set (node:TreeNode, path:ParsedPath, file:File) -> False :
+  if file is Directory :
+    create-path(node, path)
+    false
+  else :
+    val dir = create-path(node, enclosing-dir(path))
+    val name = leaf-name(path)
+    children(dir)[name] = TreeNode(name, file)
+
+;Add a new entry to the given node.
+defn add (node:TreeNode, path:ParsedPath, new-node:TreeNode) -> False :
+  val dir = create-path(node, path)
+  children(dir)[name(new-node) as String] = new-node
+
+;Retrieve the tree node at the given position.
+defn get? (node:TreeNode, path:ParsedPath) -> TreeNode|False :
+  fatal("Not aboslute") when not absolute?(path)
+  val n = length(entries(path))
+  if n == 1 :
+    node
+  else :
+    let loop (parent:TreeNode = node, i:Int = 1) :
+      ;Retrieve name at that index in the path.
+      val name = name(entries(path)[i] as NamedPath)
+      match(get?(children(parent), name)) :
+        (node:TreeNode) :
+          if i == n - 1 : node
+          else : loop(node, i + 1)
+        (f:False) :
+          false
+
+;Delete the node at the given position.
+defn delete (node:TreeNode, path:ParsedPath) -> False :
+  val parent = enclosing-dir(path)
+  val dir = get?(node, parent)
+  match(dir:TreeNode) :
+    remove(children(dir), leaf-name(path))
+  false
+
+;============================================================
+;====================== Helpers =============================
+;============================================================
+
+;Fatal unless path is absolute.
+defn ensure-absolute! (path:String) :
+  if not absolute?(parse-path(path)) :
+    fatal("Path %~ is not absolute." % [path])
+
+;Return the name of the leaf in the path.
+defn leaf-name (path:ParsedPath) -> String :
+  val entries = entries(path)
+  val n = length(entries)
+  name(entries[n - 1] as NamedPath)
+
+;Returns true if the path is enclosed within the given directory.
+defn enclosed? (dir:ParsedPath, path:ParsedPath) -> True|False :
+  if not (absolute?(dir) and absolute?(path)) :
+    fatal("enclosed? only works if both paths are absolute.")
+  if length(entries(dir)) <= length(entries(path)) :
+    for (e1 in entries(dir), e2 in entries(path)) all? :
+      e1 == e2
+
+;============================================================
+;======================== Errors ============================
+;============================================================
+
+public defstruct FileTreeError <: Exception :
+  value:String
+with:
+  constructor => #FileTreeError
+
+public defn FileTreeError (value) :
+  #FileTreeError(to-string(value))
+
+defmethod print (o:OutputStream, e:FileTreeError) :
+  print(o, value(e))

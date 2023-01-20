@@ -16,6 +16,7 @@ public defn set-global-stanza-version (sys:System,
     val config = ConfigFile([VersionStmt(version)])
     spit(sys, global-config-file(install-path(state)), config, false)
     println("Active Stanza version changed to '%_'." % [version])
+    check-new-version(sys, state, version)
 
 ;Set the project Stanza version currently being used.
 public defn set-project-stanza-version (sys:System,
@@ -28,3 +29,17 @@ public defn set-project-stanza-version (sys:System,
       (f:False) : project-config-file()
     spit(sys, path, config, false)
     println("Project Stanza version changed to '%_'." % [version])
+    check-new-version(sys, state, version)
+
+;Check the validity of the new Stanza version, and
+;print warnings.
+defn check-new-version (sys:System,
+                        state:SystemState,
+                        version:VersionSpecifier) -> False :  
+  match(version) :
+    (version:NamedVersion) :
+      fatal("Not yet implemented")
+    (version:LocalVersion) :
+      fatal("Not yet implemented")
+    (version:SystemVersion) :
+      fatal("Not yet implemented")

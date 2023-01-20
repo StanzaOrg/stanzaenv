@@ -12,6 +12,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/versions
   import stanzaenv/set-version
   import stanzaenv/config-syntax
+  import stanzaenv/filetree
 
 ;============================================================
 ;================ Testing System States =====================
@@ -495,6 +496,53 @@ defn try-set-state-1 () :
     println(set-global-stanza-version(sys, NamedVersion([0 17 50]), system-state(sys)))  
 
 ;============================================================
+;====================== Try File Tree =======================
+;============================================================
+
+defn try-filetree-1 () :
+  val tree = FileTree(
+    ["/Applications/"
+     "/Applications/settings/rules.txt"
+     "/Applications/settings/config.dash"]
+    "/Applications")
+  println(tree)
+
+defn try-filetree-2 () :
+  val tree = FileTree(
+    ["/Applications/"
+     "/Applications/settings/rules.txt"
+     "/Applications/settings/config.dash"]
+    "/Applications")
+  println(tree)
+  delete(tree, "/Applications/settings/config.dash")
+  add(tree, "/Applications/config/config.dash" => "post configuration")
+  rename(tree, "/Applications/config/config.dash", "/Applications/config/config.dash2")
+  rename(tree, "/Applications/settings", "/Applications/settings2")
+  rename(tree, "/Applications/config/config.dash2", "/config.dash2")
+  println(tree)
+  println(slurp(tree, "/config.dash2"))
+
+defn try-filetree-3 () :
+  val tree = FileTree(
+    ["/Applications/"
+     "/Applications/settings/rules.txt"
+     "/Applications/settings/config.dash"]
+    "/Applications")
+  println(tree)
+  delete(tree, "/Applications/settings/config.dash")
+  add(tree, "/Applications/config/config.dash" => "post configuration")
+  rename(tree, "/Applications/config/config.dash", "/Applications/config/config.dash2")
+  rename(tree, "/Applications/settings", "/Applications/settings2")
+  rename(tree, "/Applications/config/config.dash2", "/config.dash2")
+  spit(tree, "myprog.txt", "message1", false)
+  spit(tree, "myprog2.txt", "message2", false)
+  spit(tree, "mylog.txt", "event 1\n", true)
+  spit(tree, "mylog.txt", "event 2\n", true)
+  spit(tree, "mylog.txt", "event 3\n", true)
+  println(tree)
+  println(slurp(tree, "/config.dash2"))
+
+;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
@@ -509,4 +557,5 @@ within (package,sig) = set-stack-trace-filter() :
 ;try-read-state-2()
 ;try-read-state-3()
 ;try-read-state-4()
-try-set-state-1()
+;try-set-state-1()
+try-filetree-3()

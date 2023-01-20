@@ -59,6 +59,10 @@ public defstruct InstalledStanza :
 public defn install-path (state:SystemState) -> String :
   path(installation(state))
 
+public defn installed? (state:SystemState, v:NamedVersion) -> True|False :
+  for installed in installed-versions(state) any? :
+    version(installed) == v
+
 ;============================================================
 ;===================== Printers =============================
 ;============================================================

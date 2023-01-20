@@ -8,18 +8,27 @@ defpackage stanzaenv/versions :
 ;============================================================
 
 ;Represents a Stanza version.
-public deftype VersionSpecifier
+public deftype VersionSpecifier <: Hashable & Equalable
 
 ;Represents a named Stanza version: e.g. 0.14.33
 public defstruct NamedVersion <: VersionSpecifier :
   value: [Int, Int, Int]
+with:
+  hashable => true
+  equalable => true
 
 ;Represents a local Stanza version: e.g. "mydir/tempstanza"
 public defstruct LocalVersion <: VersionSpecifier :
   path: String
+with:
+  hashable => true
+  equalable => true
 
 ;Represents the system version of Stanza. 
 public defstruct SystemVersion <: VersionSpecifier
+with:
+  hashable => true
+  equalable => true
 
 ;============================================================
 ;==================== Printers ==============================
