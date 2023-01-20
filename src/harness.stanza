@@ -209,8 +209,11 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("MockSystem: file-exists?(%~) = %~" % [name, result])
       result
     defmethod directory? (this, name:String) :
-      val entry = find!({key(_) == name}, existing-files)
-      value(entry) is DirectoryType
+      val entry = find({key(_) == name}, existing-files)
+      val result = match(entry:KeyValue<String,FileType|MockFile>) :
+        value(entry) is DirectoryType
+      println("MockSystem: directory?(%~) = %_" % [name, result])
+      result
     defmethod current-platform (this) :
       val result = platform
       println("MockSystem: current-platform() = %~" % [result])
@@ -246,6 +249,18 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         reader/read-all(contents(entry))
       else :
         throw(Exception("Failed to read %~." % [path]))
+    defmethod list-dir (this, path:String) :
+      val files = Vector<String>()
+      for entry in existing-files do :
+        val path-slash = string-join([path, "/"])
+        if prefix?(key(entry), path-slash) :
+          val n = length(path-slash)
+          val rest = key(entry)[n to false]
+          val parsed = parse-path(rest)
+          match(find-by<NamedPath>(entries(parsed))) :
+            (e:NamedPath) : add(files, name(e))
+            (f:False) : false
+      to-tuple(files)
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
       val answer = if not empty?(prompt-seq) :
@@ -360,14 +375,12 @@ defn try-read-state-1 () :
     ["/Applications" => DirectoryType()]
     
     ;prompts
-    ["installed in" => "/Applications/stanzaenv"
-     "system PATH" => "yes"
-     "STANZAENV_DIR" => "yes"
-     "initial version of Stanza" => ""]
+    []
 
     ;platform
     OS-X)
-  system-state(sys)
+  within print-errors() :
+    println(system-state(sys))
 
 defn try-read-state-2 () :
   val sys = MockSystem(
@@ -380,14 +393,12 @@ defn try-read-state-2 () :
     ["/Applications" => DirectoryType()]
     
     ;prompts
-    ["installed in" => "/Applications/stanzaenv"
-     "system PATH" => "yes"
-     "STANZAENV_DIR" => "yes"
-     "initial version of Stanza" => ""]
+    []
 
     ;platform
     OS-X)
-  system-state(sys)
+  within print-errors() :
+    println(system-state(sys))
 
 defn try-read-state-3 () :
   val global-config = \<STR>
@@ -407,14 +418,44 @@ defn try-read-state-3 () :
      "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
     
     ;prompts
-    ["installed in" => "/Applications/stanzaenv"
-     "system PATH" => "yes"
-     "STANZAENV_DIR" => "yes"
-     "initial version of Stanza" => ""]
+    []
 
     ;platform
     OS-X)
-  system-state(sys)
+  within print-errors() :
+    println(system-state(sys))
+
+defn try-read-state-4 () :
+  val global-config = \<STR>
+    stanza-version: "0.17.50"
+  <STR>
+  val sys = MockSystem(
+    ;env vars
+    ["PWD" => "/users/myworkdir"
+     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"
+     "STANZAENV_DIR" => "/Applications/stanzaenv"]
+    
+    ;existing files
+    ["/Applications" => DirectoryType()
+     "/Applications/stanzaenv" => DirectoryType()
+     "/Applications/stanzaenv/bin/stanzaenv" => RegularFileType()
+     "/Applications/stanzaenv/stanzaenv.config" => MockFile(global-config)
+     "/Applications/stanzaenv/stanza/v0.5.4" => DirectoryType()
+     "/Applications/stanzaenv/stanza/v0.5.3" => DirectoryType()
+     "/Applications/stanzaenv/stanza/v0.5.2" => DirectoryType()
+     "/users/patricksli/.stanzaenv" => DirectoryType()
+     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
+    
+    ;prompts
+    []
+
+    ;platform
+    OS-X)
+  within print-errors() :
+    println(system-state(sys))
 
 ;============================================================
 ;==================== Main Launcher =========================
@@ -426,4 +467,7 @@ defn try-read-state-3 () :
 within (package,sig) = set-stack-trace-filter() :
   package != `core
 ;try-parse-config-4()
+try-read-state-1()
+try-read-state-2()
 try-read-state-3()
+try-read-state-4()

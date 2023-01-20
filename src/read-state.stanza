@@ -24,12 +24,15 @@ public defn system-state (sys:System) -> SystemState :
     val global-version = read-global-stanza-version(sys, path(installation))
     ;Read the path status
     val path-status = read-path-status(sys, path(installation))
-    
-    println("Installation: %_" % [installation])
-    println("Project version: %_" % [project-version])
-    println("Global version: %_" % [global-version])
-    println("Path status: %_" % [path-status])
-    fatal("Not yet implemented")
+    ;Detect the installed versions.
+    val installed-versions = detect-installed-versions(sys, path(installation))
+    ;Return the system state
+    SystemState(
+      project-version,
+      installation,
+      global-version,
+      path-status,
+      installed-versions)
 
 ;============================================================
 ;============ Read the Project Stanza Version ===============
@@ -106,3 +109,15 @@ defn read-path-status (sys:System, root:String) -> PathStatus :
 ;============================================================
 ;================ Detect Installed Versions =================
 ;============================================================
+
+defn detect-installed-versions (sys:System, root:String) -> Tuple<InstalledStanza> :
+  val dir = stanza-version-dir(root)
+  to-tuple $ for file in list-dir(sys, dir) seq? :
+    if directory?(sys, relative-to(dir,file)) :
+      match(parse-version-from-folder(file)) :
+        (v:NamedVersion) : One(InstalledStanza(v))
+        (f:False) : None()
+    else : None()
+
+defn parse-version-from-folder (folder:String) -> NamedVersion|False :
+  if prefix?(folder, "v") : parse-named-version(folder[1 to false])

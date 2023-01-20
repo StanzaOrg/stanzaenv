@@ -28,11 +28,15 @@ public defn default-installation-dir (sys:System) -> String|False :
   match(home:String) :
     string-join([home "/.stanzaenv"])
 
+;Return the directory that all the Stanza versions are stored.
+public defn stanza-version-dir (root:String) -> String :
+  relative-to(root, "stanza")
+
 ;Return the path to the Stanza directory.
 public defn stanza-version-path (stanzaenv-root:String, version:NamedVersion) -> String :
   val [a,b,c] = value(version)
-  val relpath = to-string("stanza/v%_.%_.%_" % [a,b,c])
-  relative-to(stanzaenv-root, relpath)
+  val folder = to-string("v%_.%_.%_" % [a,b,c])
+  relative-to(stanza-version-dir(stanzaenv-root), folder)
 
 ;Return the path to the stanzaenv temp directory.
 public defn stanzaenv-temp-dir (stanzaenv-root:String) -> String :

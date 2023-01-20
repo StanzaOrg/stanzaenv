@@ -14,6 +14,8 @@ public defmulti file-exists? (s:System, name:String) -> True|False
 
 public defmulti create-dir (s:System, name:String) -> False
 
+public defmulti list-dir (s:System, name:String) -> Tuple<String>
+
 public defmulti directory? (s:System, path:String) -> True|False
 
 public defmulti current-platform (s:System) -> Platform
