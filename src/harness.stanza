@@ -74,8 +74,8 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
       InstalledStanza(version-spec() as NamedVersion)
 
   SystemState(
-    project-version()
     installation()
+    project-version()
     version-spec()
     path-status()
     installed-versions())
@@ -86,9 +86,9 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
 
 defn print-states () :
   println $ testing-state $ [
+    0 ;installation
     0 ;project-version
     0 ;version-spec
-    0 ;installation
     0 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -96,9 +96,9 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
+    0 ;installation
     1 ;project-version
     0 ;version-spec
-    0 ;installation
     0 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -106,8 +106,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     0 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -115,8 +115,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     2 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -124,8 +124,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     3 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -133,8 +133,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     0 ;path
     1 ;installed-versions
@@ -142,8 +142,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     1 ;path
     1 ;installed-versions
@@ -151,8 +151,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     2 ;path
     1 ;installed-versions
@@ -160,8 +160,8 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     3 ;path
     1 ;installed-versions
@@ -169,16 +169,16 @@ defn print-states () :
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     3 ;path
     0 ;installed-versions
   ]
 
   println $ testing-state $ [
-    2 ;project-version
     0 ;installation
+    2 ;project-version
     4 ;version-spec
     3 ;path
     3 ;installed-versions
@@ -195,74 +195,95 @@ defstruct MockFile :
   contents:String
 
 defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
-                 existing-files:Tuple<KeyValue<String,FileType|MockFile>>,
+                 existing-files:Tuple<KeyValue<String,String>|String>,
+                 working-dir:String,
                  prompts:Tuple<KeyValue<String,String>>,
                  platform:Platform) -> System :
-  val prompt-seq = to-seq(prompts)  
+                 
+  ;Use the filetree to mimic a file system.               
+  val filetree = FileTree(existing-files, working-dir)
+
+  ;Use a sequence of prompts to mimic the user responses.
+  val prompt-seq = to-seq(prompts)
+  
   new System :
+    defmethod print (o:OutputStream, this) :
+      print(o, filetree)
+      
     defmethod get-env (this, name:String) :
       val result = lookup?(env-vars, name)
       println("MockSystem: get-env(%~) = %~" % [name, result])
       result
+      
     defmethod create-dir (this, name:String) :
       println("MockSystem: create-dir(%~)" % [name])
+      add(filetree, string-join([name, "/"]))
+      
     defmethod file-exists? (this, name:String) :
-      val result = contains?(seq(key,existing-files), name)
+      val result = exists?(filetree, name)
       println("MockSystem: file-exists?(%~) = %~" % [name, result])
       result
+      
     defmethod directory? (this, name:String) :
-      val entry = find({key(_) == name}, existing-files)
-      val result = match(entry:KeyValue<String,FileType|MockFile>) :
-        value(entry) is DirectoryType
+      val result = directory?(filetree, name)
       println("MockSystem: directory?(%~) = %_" % [name, result])
       result
+      
     defmethod current-platform (this) :
       val result = platform
       println("MockSystem: current-platform() = %~" % [result])
       result
+      
     defmethod download-to-file (this, url:String, filename:String) :
       println("MockSystem: download-to-file(%~, %~)" % [url, filename])
+      add(filetree, filename => filename)
+      
     defmethod unzip-to-folder (this, zipfile:String, folder:String) :
       println("MockSystem: unzip-to-folder(%~, %~)" % [zipfile, folder])
+      ;Imitate unzip.
+      val zip = slurp(filetree, zipfile)
+      val mock-stanzaenv-zip = FileTree(
+        ["/bin/stanzaenv"
+         "/License.txt"],
+        "/")
+      val mock-stanza-zip = FileTree(
+        ["/stanza"
+         "/License.txt"
+         "/pkgs/core.pkg"
+         "/core/core.stanza"],
+        "/")
+      switch substring?{zip, _} :
+        "stanzaenv.zip" : add(filetree, folder, mock-stanzaenv-zip["/"])
+        "stanza.zip" : add(filetree, folder, mock-stanza-zip["/"])
+        else : fatal("Not yet implemented: %_" % [zip])
+      
     defmethod delete-recursive (this, folder:String) :
       println("MockSystem: delete-recursive %~" % [folder])
+      delete(filetree, folder)
+
     defmethod move-dir (this, oldpath:String, newpath:String) :
       println("MockSystem: move-dir(%~, %~)" % [oldpath, newpath])
-    defmethod resolve-path (this, path:String) :      
-      val ppath = parse-path(path)
-      val result = 
-        if absolute?(ppath) :
-          path
-        else :
-          match(lookup?(env-vars, "PWD")) :
-            (cwd:String) : to-string(relative-to-dir(parse-path(cwd), path))
-            (f:False) : false
+      rename(filetree, oldpath, newpath)
+
+    defmethod resolve-path (this, path:String) :
+      val result = resolve(filetree, path)
       println("MockSystem: resolve-path(%~) = %~" % [path, result])      
       result
+      
     defmethod spit (this, path:String, snippet, append?:True|False) :
       println("MockSystem: spit(%~, %~)" % [path, append?])
       println("Contents:")
       within indented() :
         println(snippet)
+      spit(filetree, path, to-string(snippet), append?)
+      
     defmethod read-file (this, path:String) :
       println("MockSystem: read-file(%~)" % [path])
-      val entry = lookup?(existing-files, path)
-      match(entry:MockFile) :
-        reader/read-all(contents(entry))
-      else :
-        throw(Exception("Failed to read %~." % [path]))
+      slurp(filetree, path)
+        
     defmethod list-dir (this, path:String) :
-      val files = Vector<String>()
-      for entry in existing-files do :
-        val path-slash = string-join([path, "/"])
-        if prefix?(key(entry), path-slash) :
-          val n = length(path-slash)
-          val rest = key(entry)[n to false]
-          val parsed = parse-path(rest)
-          match(find-by<NamedPath>(entries(parsed))) :
-            (e:NamedPath) : add(files, name(e))
-            (f:False) : false
-      to-tuple(files)
+      list-dir(filetree, path)
+      
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
       val answer = if not empty?(prompt-seq) :
@@ -293,7 +314,10 @@ defn try-install-0 () :
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications" => DirectoryType()]
+    ["/Applications/"]
+    
+    ;working directory
+    "/"
     
     ;prompts
     ["installed in" => "/Applications/stanzaenv"
@@ -314,7 +338,10 @@ defn try-install-1 () :
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications" => DirectoryType()]
+    ["/Applications/"]
+    
+    ;working directory
+    "/"
     
     ;prompts
     ["installed in" => "/Applications/stanzaenv"
@@ -374,7 +401,10 @@ defn try-read-state-1 () :
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications" => DirectoryType()]
+    ["/Applications/"]
+    
+    ;working directory
+    "/"
     
     ;prompts
     []
@@ -392,7 +422,10 @@ defn try-read-state-2 () :
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications" => DirectoryType()]
+    ["/Applications/"]
+    
+    ;working directory
+    "/"
     
     ;prompts
     []
@@ -408,16 +441,17 @@ defn try-read-state-3 () :
   <STR>
   val sys = MockSystem(
     ;env vars
-    ["PWD" => "/users/myworkdir"
-     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin"
+    ["PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin"
      "SHELL" => "bin/zsh"
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications" => DirectoryType()
-     "/users/patricksli/.stanzaenv" => DirectoryType()
-     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
-     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
+    ["/Applications/"
+     "/users/patricksli/.stanzaenv/bin/stanzaenv"
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => global-config]
+
+    ;working dir
+    "/users/myworkdir"
     
     ;prompts
     []
@@ -433,23 +467,22 @@ defn try-read-state-4 () :
   <STR>
   val sys = MockSystem(
     ;env vars
-    ["PWD" => "/users/myworkdir"
-     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+    ["PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
      "SHELL" => "bin/zsh"
      "HOME" => "/users/patricksli"
      "STANZAENV_DIR" => "/Applications/stanzaenv"]
     
     ;existing files
-    ["/Applications" => DirectoryType()
-     "/Applications/stanzaenv" => DirectoryType()
-     "/Applications/stanzaenv/bin/stanzaenv" => RegularFileType()
-     "/Applications/stanzaenv/stanzaenv.config" => MockFile(global-config)
-     "/Applications/stanzaenv/stanza/v0.5.4" => DirectoryType()
-     "/Applications/stanzaenv/stanza/v0.5.3" => DirectoryType()
-     "/Applications/stanzaenv/stanza/v0.5.2" => DirectoryType()
-     "/users/patricksli/.stanzaenv" => DirectoryType()
-     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
-     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
+    ["/Applications/stanzaenv/bin/stanzaenv"
+     "/Applications/stanzaenv/stanzaenv.config" => global-config
+     "/Applications/stanzaenv/stanza/v0.5.4/"
+     "/Applications/stanzaenv/stanza/v0.5.3/"
+     "/Applications/stanzaenv/stanza/v0.5.2/"
+     "/users/patricksli/.stanzaenv/bin/stanzaenv"
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => global-config]
+
+    ;working dir
+    "/users/myworkdir"
     
     ;prompts
     []
@@ -469,23 +502,22 @@ defn try-set-state-1 () :
   <STR>
   val sys = MockSystem(
     ;env vars
-    ["PWD" => "/users/myworkdir"
-     "PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+    ["PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
      "SHELL" => "bin/zsh"
      "HOME" => "/users/patricksli"
      "STANZAENV_DIR" => "/Applications/stanzaenv"]
     
     ;existing files
-    ["/Applications" => DirectoryType()
-     "/Applications/stanzaenv" => DirectoryType()
-     "/Applications/stanzaenv/bin/stanzaenv" => RegularFileType()
-     "/Applications/stanzaenv/stanzaenv.config" => MockFile(global-config)
-     "/Applications/stanzaenv/stanza/v0.5.4" => DirectoryType()
-     "/Applications/stanzaenv/stanza/v0.5.3" => DirectoryType()
-     "/Applications/stanzaenv/stanza/v0.5.2" => DirectoryType()
-     "/users/patricksli/.stanzaenv" => DirectoryType()
-     "/users/patricksli/.stanzaenv/bin/stanzaenv" => RegularFileType()
-     "/users/patricksli/.stanzaenv/stanzaenv.config" => MockFile(global-config)]
+    ["/Applications/stanzaenv/bin/stanzaenv"
+     "/Applications/stanzaenv/stanzaenv.config" => global-config
+     "/Applications/stanzaenv/stanza/v0.5.4/"
+     "/Applications/stanzaenv/stanza/v0.5.3/"
+     "/Applications/stanzaenv/stanza/v0.5.2/"
+     "/users/patricksli/.stanzaenv/bin/stanzaenv"
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => global-config]
+
+    ;working dir
+    "/users/myworkdir"
     
     ;prompts
     []
@@ -543,6 +575,23 @@ defn try-filetree-3 () :
   println(tree)
   println(slurp(tree, "/config.dash2"))
 
+defn try-filetree-4 () :
+  val tree1 = FileTree(
+    ["/a/"
+     "/a/b/"
+     "/a/b/x.txt"
+     "/a/b/y.txt"]
+    "/")
+  val tree2 = FileTree(
+    ["/xyz/stuff.txt"
+     "/zyx/leaf.txt"]
+    "/")
+  println(tree1)
+  println(tree2)
+  
+  add(tree1, "/a", tree2["/"])
+  println(tree1)
+
 ;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
@@ -552,11 +601,11 @@ defn try-filetree-3 () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-;try-install-1()
+try-install-1()
 ;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()
 ;try-read-state-3()
 ;try-read-state-4()
 ;try-set-state-1()
-try-filetree-3()
+;try-filetree-4()

@@ -41,8 +41,8 @@ defn fresh-install (sys:System) -> False :
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
-  initialize-stanzaenv-env-var(sys, install-dir)
-  install-initial-stanza-version(sys, path(install-dir))
+  initialize-stanzaenv-env-var(sys, install-dir)  
+  install-initial-stanza-version(sys, install-dir)
         
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :
@@ -162,11 +162,13 @@ defn prompt-yes-no (sys:System, msg:String) -> True|False :
       else : Bad("Not a valid option.")
 
 ;Perform an initial install of the Stanza version.
-defn install-initial-stanza-version (sys:System, root:String) -> False :
+defn install-initial-stanza-version (sys:System, install:EnvInstallation) -> False :
   val version = request-initial-version(sys)
   match(version) :
     (version:NamedVersion) :
-      install-stanza-version(sys, version, root)
-      set-global-stanza-version(sys, version, system-state(sys))
+      install-stanza-version(sys, version, path(install))
+      println(sys)
+      set-global-stanza-version(sys, version, system-state(sys,install))
+      println(sys)
     (version:False) :
       println("Leaving Stanza uninstalled.")  

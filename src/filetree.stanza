@@ -18,11 +18,20 @@ public defmulti delete (tree:FileTree, path:String) -> False
 ;Add the given item to the tree.
 public defmulti add (tree:FileTree, content:KeyValue<String,String>|String) -> False
 
+;Add the given subtree to the tree.
+public defmulti add (tree:FileTree, path:String, node:TreeNode) -> False
+
 ;Retrieve the directory/file at the given path as a tree node.
 public defmulti get (tree:FileTree, path:String) -> TreeNode
 
+;List the files in the directory.
+public defmulti list-dir (tree:FileTree, path:String) -> Tuple<String>
+
 ;Return true if the path exists.
 public defmulti exists? (tree:FileTree, path:String) -> True|False
+
+;Returns true if the given path is a directory.
+public defmulti directory? (tree:FileTree, path:String) -> True|False
 
 ;Rename the file.
 public defmulti rename (tree:FileTree, oldpath:String, newpath:String) -> False
@@ -35,6 +44,9 @@ public defmulti spit (tree:FileTree, path:String, contents:String, append?:True|
 
 ;Change the working directory.
 public defmulti change-dir (tree:FileTree, path:String) -> False
+
+;Resolve a path.
+public defmulti resolve (tree:FileTree, path:String) -> String|False
 
 ;============================================================
 ;================ Creation of File Tree =====================
@@ -79,6 +91,12 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
         tree]
       print(o, "FileTree%_" % [colon-field-list(items)])
 
+    defmethod resolve (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolved)) :
+       (n:TreeNode) : to-string(resolved)
+       (f:False) : false
+
     defmethod delete (this, path:String) :
       val resolved = resolve(path)
       if enclosed?(resolved, workdir) :
@@ -88,6 +106,21 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
     defmethod add (this, content:KeyValue<String,String>|String) :
       add-content(content)
 
+    defmethod add (this, path:String, node:TreeNode) :
+      val resolved = resolve(path)
+      if name(node) is String :
+        val dest = relative-to-dir(resolved, name(node) as String)
+        if get?(tree, dest) is-not False :
+          throw(FileTreeError("There is already a file/directory at the destination: %~." % [dest]))
+        add(tree, resolved, copy(node))
+      else :
+        for child in values(children(node)) do :
+          val dest = relative-to-dir(resolved, name(child) as String)
+          if get?(tree, dest) is-not False :
+            throw(FileTreeError("There is already a file/directory at the destination: %~." % [dest]))
+        for child in values(children(node)) do :
+          add(tree, resolved, copy(child))      
+
     defmethod get (this, path:String) :
       val resolved = resolve(path)
       match(get?(tree, resolved)) :
@@ -96,6 +129,22 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
   
     defmethod exists? (this, path:String) :
       get?(tree, resolve(path)) is-not False
+
+    defmethod directory? (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolved)) :
+        (node:TreeNode) : type(node) is Directory
+        (f:False) : throw(FileTreeError("No such file: %_." % [resolved]))
+        
+    defmethod list-dir (this, path:String) :
+      val resolved = resolve(path)
+      match(get?(tree, resolved)) :
+        (node:TreeNode) :
+          if type(node) is-not Directory :
+            throw(FileTreeError("Path %~ is not a directory." % [resolved]))
+          to-tuple(keys(children(node)))          
+        (f:False) :
+          throw(FileTreeError("No such file: %_." % [resolved]))      
 
     defmethod rename (this, oldpath:String, newpath:String) :
       ;Throw an error if the destination already exists.
@@ -179,6 +228,19 @@ defstruct TreeNode :
   type: File with: (setter => set-type)
   children: HashTable<String,TreeNode> with:
     init => HashTable<String,TreeNode>()
+
+;Copy a TreeNode.
+defn copy (node:TreeNode) -> TreeNode :
+  val new-node = TreeNode(name(node), type(node))
+  for entry in children(node) do :
+    children(new-node)[key(entry)] = copy(value(entry))
+  new-node
+
+;Copy a TreeNode and use a new name as the root.
+defn copy (node:TreeNode, new-root:String|Root) -> TreeNode :
+  val copy = copy(node)
+  set-name(copy, new-root)
+  copy
 
 ;Printing the tree node.
 defmethod print (o:OutputStream, node:TreeNode) :

@@ -12,8 +12,8 @@ defpackage stanzaenv/system-state :
 ;- project-version: A project-specific Stanza version override.
 ;- global-version: The global Stanza version.
 public defstruct SystemState :
-  project-version:ProjectVersion|False
   installation:EnvInstallation
+  project-version:ProjectVersion|False  
   global-version:VersionSpecifier|False
   path-status:PathStatus
   installed-versions:Tuple<InstalledStanza>

@@ -12,10 +12,9 @@ defpackage stanzaenv/read-state :
   import stanzaenv/paths
   import stanzaenv/errors
 
-public defn system-state (sys:System) -> SystemState :
+public defn system-state (sys:System, installation:EnvInstallation) -> SystemState :
   within wrap-error(SystemStateError) :
-    ;Read the installation type.
-    val installation = detect-installation(sys)
+    ;Ensure that stanzaenv is installed.
     if installation is NoInstallation :
       throw(StanzaenvNotInstalled())
     ;Read the project-specific version.
@@ -28,11 +27,14 @@ public defn system-state (sys:System) -> SystemState :
     val installed-versions = detect-installed-versions(sys, path(installation))
     ;Return the system state
     SystemState(
-      project-version,
       installation,
+      project-version,      
       global-version,
       path-status,
       installed-versions)
+
+public defn system-state (sys:System) -> SystemState :
+  system-state(sys, detect-installation(sys))    
 
 ;============================================================
 ;============ Read the Project Stanza Version ===============
