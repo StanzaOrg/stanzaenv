@@ -651,7 +651,7 @@ defn try-call-stanza () :
     ;platform
     OS-X)
   within print-errors() :
-    println(call-stanza(sys, ["version" "-terse"], system-state(sys)))
+    println(call-stanza(sys, ["stanza" "version" "-terse"], system-state(sys)))
 
 ;============================================================
 ;==================== Main Launcher =========================
