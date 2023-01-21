@@ -38,8 +38,12 @@ defn check-new-version (sys:System,
                         version:VersionSpecifier) -> False :  
   match(version) :
     (version:NamedVersion) :
-      fatal("Not yet implemented")
+      if not installed?(state, version) :
+        println("Warning: This Stanza version has not yet been installed. Please \
+                 install it before using.")
     (version:LocalVersion) :
-      fatal("Not yet implemented")
+      val fullpath = relative-to(path(version), relpath-to-stanza())
+      if not file-exists?(sys, fullpath) :
+        println("Warning: There was no 'stanza' executable found at location '%_'." % [fullpath])
     (version:SystemVersion) :
-      fatal("Not yet implemented")
+      false

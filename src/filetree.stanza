@@ -86,9 +86,12 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
   ;Create the file tree.
   new FileTree :
     defmethod print (o:OutputStream, this) :
+      val file-items = for entry in list-files(tree) seq :
+        named-list-fields(key(entry), [value(entry)])
       val items = [
-        "working-directory: %_" % [workdir]
-        tree]
+        simple-field("working-directory", workdir)
+        simple-field("file tree", tree)
+        "files%_" % [colon-field-list(file-items)]]
       print(o, "FileTree%_" % [colon-field-list(items)])
 
     defmethod resolve (this, path:String) :
@@ -228,6 +231,40 @@ defstruct TreeNode :
   type: File with: (setter => set-type)
   children: HashTable<String,TreeNode> with:
     init => HashTable<String,TreeNode>()
+
+;List all the files that have some content under the given node.
+defn list-files (node:TreeNode) -> Seqable<KeyValue<String,String>> :
+
+  ;Accumulate all the files.
+  val file-list = Vector<KeyValue<String,String>>()
+
+  ;Add a new-found file to the list.
+  defn add-file (path:List<String|Root>, contents:String) -> False :
+    add(file-list, to-path(path) => contents)
+
+  ;Construct a path from the given names.
+  defn to-path (parents:List<String|Root>) -> String :
+    val items = Vector<PathElement>()
+    for p in parents do :
+      match(p) :
+        (p:String) : add(items, NamedPath(p))
+        (p:Root) : add(items, RootPath())
+    reverse!(items)
+    to-string(ParsedPath(to-tuple(items)))
+
+  ;Scan through the given node for non-empty files.
+  defn scan (node:TreeNode, parents:List<String|Root>) -> False :
+    val path = cons(name(node), parents)
+    match(type(node)) :
+      (type:MockFile) :
+        if not empty?(contents(type)) :
+          add-file(path, contents(type))
+      (type:Directory) :
+        for child in values(children(node)) do :
+          scan(child, path)
+
+  scan(node, List())
+  to-tuple(file-list)
 
 ;Copy a TreeNode.
 defn copy (node:TreeNode) -> TreeNode :
