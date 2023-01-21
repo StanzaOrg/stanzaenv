@@ -1,0 +1,87 @@
+defpackage stanzaenv/standard-system :
+  import core
+  import collections
+  import reader
+  import stanzaenv/request-exit
+  import stanzaenv/system-api
+
+public deftype StandardSystem <: System
+
+defmethod get-env (s:StandardSystem, name:String) -> String|False :
+  get-env(name)
+
+defmethod set-env (s:StandardSystem, name:String, value:String) -> False :
+  set-env(name, value)
+
+defmethod file-exists? (s:StandardSystem, name:String) -> True|False :
+  file-exists?(name)
+
+defmethod create-dir (s:StandardSystem, name:String) -> False :
+  create-dir(name)
+
+defmethod list-dir (s:StandardSystem, name:String) -> Tuple<String> :
+  dir-files(name)
+
+defmethod directory? (s:StandardSystem, path:String) -> True|False :
+  file-type(path) is DirectoryType
+
+defmethod current-platform (s:StandardSystem) -> Platform :
+  CURRENT-PLATFORM
+
+defmethod download-to-file (s:StandardSystem, url:String, filename:String) -> False :
+  stanzaenv/download/download-from-url(url, filename)
+
+defmethod unzip-to-folder (s:StandardSystem, zipfile:String, folder:String) -> False :
+  stanzaenv/unzip/unzip-to-dir(zipfile, folder)
+
+defmethod delete-recursive (s:StandardSystem, folder:String) -> False :
+  delete-recursive(folder, false)
+
+defmethod prompt-user (s:StandardSystem, prompt:String) -> String :
+  #if-defined(PLATFORM-WINDOWS) :
+    val prompter = core/line-prompter/LinePrompter(prompt, prompt)
+  #else :
+    val prompter = stz/line-noise-prompter/LineNoisePrompter(prompt, prompt)
+  match(get-line(prompter)) :
+    (str:String) : str
+    (f:False) : request-exit(0)
+
+defmethod move-dir (s:StandardSystem, old-path:String, new-path:String) -> False :
+  rename-file(old-path new-path)
+
+defmethod copy-file (s:StandardSystem, old-path:String, new-path:String) -> False :
+  copy-file(old-path, new-path)
+
+defmethod spit (s:StandardSystem, filename:String, snippet, append?:True|False) -> False :
+  spit(filename, snippet, append?)
+
+defmethod resolve-path (s:StandardSystem, path:String) -> String|False :
+  resolve-path(path)
+
+defmethod read-file (s:StandardSystem, path:String) -> ? :
+  read-file(path)
+
+defmethod call-system (s:StandardSystem,
+                       file:String,
+                       args:Tuple<String>,
+                       workdir:String|False,
+                       env-vars:Tuple<KeyValue<String,String>>|False) ->
+                       [Int, String] :
+  val buffer = StringBuffer()
+  val proc = Process(file, args, STANDARD-IN, PROCESS-OUT, PROCESS-OUT, workdir, env-vars)
+  val proc-out = output-stream(proc)
+  let loop () :
+    val c = get-char(proc-out)
+    match(c:Char) :
+      add(buffer,c)
+      loop()
+  val code = match(wait(proc)) :
+    (s:ProcessDone) : value(s)
+    (s:ProcessTerminated|ProcessStopped) : -1
+  val output = to-string(buffer)
+  [code, output]
+
+defmethod replace-current-process (s:StandardSystem,
+                                   file:String,
+                                   args:Tuple<String>) -> False :
+  replace-current-process(file, args)

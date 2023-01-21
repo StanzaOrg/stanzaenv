@@ -1,0 +1,31 @@
+defpackage stanzaenv/request-exit :
+  import core
+  import collections
+
+;Used internally for exiting out of the labeled scope.
+;- code: Int if exit requested, False if normal operation.
+defstruct ExitValue<T> :
+  code:Int|False
+  value:T|False 
+
+;The exit handler.
+var EXIT:Int -> Void = fn (code) :
+  fatal("No exit handler installed.")
+
+;Start an exit block.
+;Any calls to request-exit will gracefully backout to this
+;spot, before calling system exit().
+public defn with-requested-exit<?T> (body:() -> ?T) -> T :
+  val result = label<ExitValue<T>> break :
+    defn handle-exit (code:Int) :
+      break(ExitValue<T>(code, false))
+    let-var EXIT = handle-exit :
+      ExitValue<T>(false, body())
+  if code(result) is False :
+    value(result) as T
+  else :
+    exit(code(result) as Int)
+
+;Request a graceful exit to the exit block.
+public defn request-exit (code:Int) -> Void :
+  EXIT(code)
