@@ -28,6 +28,14 @@ public defn default-installation-dir (sys:System) -> String|False :
   match(home:String) :
     string-join([home "/.stanzaenv"])
 
+;Return the path to the stanzaenv executable.
+public defn stanzaenv-exe-path (root:String) -> String :
+  relative-to(root, relpath-to-stanzaenv())
+
+;Return paths to all shim executables.
+public defn shim-paths (root:String) -> Tuple<String> :
+  [relative-to(bin-dir(root), "stanza")]
+
 ;Return the directory that all the Stanza versions are stored.
 public defn stanza-version-dir (root:String) -> String :
   relative-to(root, "stanza")

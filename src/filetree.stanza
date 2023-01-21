@@ -33,8 +33,11 @@ public defmulti exists? (tree:FileTree, path:String) -> True|False
 ;Returns true if the given path is a directory.
 public defmulti directory? (tree:FileTree, path:String) -> True|False
 
-;Rename the file.
+;Rename the file/directory.
 public defmulti rename (tree:FileTree, oldpath:String, newpath:String) -> False
+
+;Copy the file
+public defmulti copy-file (tree:FileTree, oldpath:String, newpath:String) -> False
 
 ;Read the file at the given location.
 public defmulti slurp (tree:FileTree, path:String) -> String
@@ -164,6 +167,17 @@ public defn FileTree (contents:Tuple<KeyValue<String,String>|String>
 
       ;Move it to the new location.
       add(tree, enclosing-dir(resolved), subtree)
+
+    defmethod copy-file (this, oldpath:String, newpath:String) :
+      if not exists?(this, oldpath) :
+        throw(FileTreeError("No such file: %_." % [oldpath]))
+      if directory?(this, oldpath) :
+        throw(FileTreeError("Not a file: %_." % [oldpath]))
+      if exists?(this, newpath) :
+        throw(FileTreeError("There is already a file/directory at the destination: %~." % [newpath]))
+      val oldnode = get?(tree, resolve(oldpath)) as TreeNode
+      val resolved = resolve(newpath)      
+      add(tree, enclosing-dir(resolved), copy(oldnode, leaf-name(resolved)))
 
     defmethod slurp (this, path:String) :
       val resolved = resolve(path)

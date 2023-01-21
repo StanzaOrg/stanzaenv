@@ -270,6 +270,10 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("MockSystem: move-dir(%~, %~)" % [oldpath, newpath])
       rename(filetree, oldpath, newpath)
 
+    defmethod copy-file (this, oldpath:String, newpath:String) :
+      println("MockSystem: copy-file(%~, %~)" % [oldpath, newpath])
+      copy-file(filetree, oldpath, newpath)      
+
     defmethod resolve-path (this, path:String) :
       val result = resolve(filetree, path)
       println("MockSystem: resolve-path(%~) = %~" % [path, result])      
@@ -662,7 +666,7 @@ defn try-call-stanza () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-;try-install-1()
+try-install-1()
 ;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()
@@ -670,4 +674,4 @@ within (package,sig) = set-stack-trace-filter() :
 ;try-read-state-4()
 ;try-set-state-1()
 ;try-filetree-4()
-try-call-stanza()
+;try-call-stanza()
