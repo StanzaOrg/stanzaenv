@@ -1,0 +1,44 @@
+defpackage stanzaenv/main :
+  import core
+  import collections
+  import arg-parser
+
+;============================================================
+;====================== Framework ===========================
+;============================================================
+
+;Accumulate all the actions supported by stanzaenv.
+val ENV-ACTIONS = Vector<Command>()
+defn new-command (c:Command) : add(ENV-ACTIONS, c)
+
+;============================================================
+;==================== Version Command =======================
+;============================================================
+
+val VERSION-MSG =
+\<STR>
+                    Stanzaenv
+         Stanza Environment and Version Manager
+
+                 Version 0.0.0
+<STR>
+
+new-command $ Command(
+  "version"
+  ZeroArg false
+  []
+  "Displays the Stanzaenv version."
+  false
+  fn (cmd-args) :
+    println(VERSION-MSG)
+)
+
+;============================================================
+;======================== Launch ============================
+;============================================================
+
+simple-command-line-cli(
+  VERSION-MSG,
+  to-tuple(ENV-ACTIONS),
+  "help",
+  true)
