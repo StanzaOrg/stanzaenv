@@ -13,6 +13,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/set-version
   import stanzaenv/config-syntax
   import stanzaenv/filetree
+  import stanzaenv/call-stanza
   import stz/printing-utils
 
 ;============================================================
@@ -215,6 +216,9 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       val result = lookup?(env-vars, name)
       println("MockSystem: get-env(%~) = %~" % [name, result])
       result
+
+    defmethod set-env (this, name:String, value:String) :
+      println("MockSystem: set-env(%~, %~)" % [name, value])
       
     defmethod create-dir (this, name:String) :
       println("MockSystem: create-dir(%~)" % [name])
@@ -280,7 +284,7 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       
     defmethod read-file (this, path:String) :
       println("MockSystem: read-file(%~)" % [path])
-      slurp(filetree, path)
+      reader/read-all(slurp(filetree, path))
         
     defmethod list-dir (this, path:String) :
       list-dir(filetree, path)
@@ -297,6 +301,14 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         simple-field("env-vars", env-vars)]
       println("MockSystem: call-system%_" % [colon-field-list(items)])
       [0, ""]
+
+    defmethod replace-current-process (this, 
+                                       file:String,
+                                       args:Tuple<String>) -> False :
+      val items = [
+        simple-field("file", written(file))
+        simple-field("args", args)]
+      println("MockSystem: replace-current-process%_" % [colon-field-list(items)])
       
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.
@@ -607,6 +619,41 @@ defn try-filetree-4 () :
   println(tree1)
 
 ;============================================================
+;=================== Try Call Stanza ========================
+;============================================================
+
+defn try-call-stanza () :
+  val global-config = \<STR>
+    stanza-version: "0.5.4"
+  <STR>
+  val sys = MockSystem(
+    ;env vars
+    ["PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"
+     "STANZAENV_DIR" => "/Applications/stanzaenv"]
+    
+    ;existing files
+    ["/Applications/stanzaenv/bin/stanzaenv"
+     "/Applications/stanzaenv/stanzaenv.config" => global-config
+     "/Applications/stanzaenv/stanza/v0.5.4/stanza"
+     "/Applications/stanzaenv/stanza/v0.5.3/stanza"
+     "/Applications/stanzaenv/stanza/v0.5.2/stanza"
+     "/users/patricksli/.stanzaenv/bin/stanzaenv"
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => global-config]
+
+    ;working dir
+    "/users/myworkdir"
+    
+    ;prompts
+    []
+
+    ;platform
+    OS-X)
+  within print-errors() :
+    println(call-stanza(sys, ["version" "-terse"], system-state(sys)))
+
+;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
 
@@ -615,7 +662,7 @@ defn try-filetree-4 () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-try-install-1()
+;try-install-1()
 ;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()
@@ -623,3 +670,4 @@ try-install-1()
 ;try-read-state-4()
 ;try-set-state-1()
 ;try-filetree-4()
+try-call-stanza()

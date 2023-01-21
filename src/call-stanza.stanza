@@ -1,0 +1,56 @@
+defpackage stanzaenv/call-stanza :
+  import core
+  import collections
+  import stanzaenv/system-api
+  import stanzaenv/system-state
+  import stanzaenv/versions
+  import stanzaenv/paths
+  import stanzaenv/errors
+  
+public defn call-stanza (sys:System,
+                         args:Tuple<String>,
+                         system-state:SystemState) -> False :
+  ;Ensure that the version is properly installed.
+  val version = ensure-active-version-installed(system-state)
+  ;If it's the system version then just call it.
+  if version is SystemVersion :
+    fatal("Call system version")
+  else :
+    ;Retrieve the path to the Stanza executable.
+    val stanza-dir = stanza-path(system-state, version)
+    ;Ensure that the executable is there.
+    val stanza-exe = stanza-exe-path(stanza-dir)
+    if not file-exists?(sys,stanza-exe) :
+      throw(MissingStanzaExe(stanza-dir))
+    ;Launch Stanza with the appropriate STANZA_CONFIG.
+    launch-stanza-exe(sys, stanza-exe, stanza-dir, args)
+  
+;Ensure that the active Stanza version is installed.
+defn ensure-active-version-installed (state:SystemState) -> VersionSpecifier :
+  match(active-version(state)) :
+    (v:NamedVersion) :
+      if not installed?(state, v) :
+        throw(ActiveVersionNotInstalled(v))
+      v
+    (v:VersionSpecifier) :
+      v
+    (f:False) : 
+      throw(NoActiveVersionSpecified())
+
+;Retrieve the Stanza directory for the corresponding version.
+defn stanza-path (state:SystemState, v:VersionSpecifier) -> String :
+  match(v) :
+    (v:NamedVersion) : stanza-version-path(install-path(state), v)
+    (v:LocalVersion) : path(v)
+
+;Launch the Stanza executable
+defn launch-stanza-exe (sys:System,
+                        stanza-exe:String,
+                        stanza-dir:String,
+                        args:Tuple<String>) -> False :
+  val new-args = to-tuple $
+    for (x in args, i in 0 to false) seq :
+      if i == 0 : stanza-exe
+      else : x
+  set-env(sys, "STANZA_CONFIG", stanza-dir)
+  replace-current-process(sys, stanza-exe, new-args)

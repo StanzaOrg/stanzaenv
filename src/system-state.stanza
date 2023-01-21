@@ -56,12 +56,20 @@ public defstruct InstalledStanza :
 ;===================== Accessors ============================
 ;============================================================
 
+;Return the path where the system is installed.
 public defn install-path (state:SystemState) -> String :
   path(installation(state))
 
+;Return true if the given Stanza version is installed.
 public defn installed? (state:SystemState, v:NamedVersion) -> True|False :
   for installed in installed-versions(state) any? :
     version(installed) == v
+
+;Returns the active Stanza version in effect.
+public defn active-version (state:SystemState) -> VersionSpecifier|False :
+  match(project-version(state)) :
+    (v:ProjectVersion) : version(v)
+    (f:False) : global-version(state)
 
 ;============================================================
 ;===================== Printers =============================

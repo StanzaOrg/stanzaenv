@@ -11,7 +11,7 @@ defpackage stanzaenv/config-syntax :
 ;============================================================
 
 ;Parse a stanzaenv config file.
-public defn parse-config-file (forms) -> ConfigFile :
+public defn parse-config-file (forms:List) -> ConfigFile :
   parse-syntax[stanzaenv-syntax / #config-file](forms)
 
 ;Read a stanzaenv config file.

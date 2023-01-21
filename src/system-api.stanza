@@ -10,6 +10,8 @@ public deftype System
 
 public defmulti get-env (s:System, name:String) -> String|False
 
+public defmulti set-env (s:System, name:String, value:String) -> False
+
 public defmulti file-exists? (s:System, name:String) -> True|False
 
 public defmulti create-dir (s:System, name:String) -> False
@@ -42,3 +44,7 @@ public defmulti call-system (s:System,
                              workdir:String|False,
                              env-vars:Tuple<KeyValue<String,String>>|False) ->
                             [Int, String]
+
+public defmulti replace-current-process (s:System,
+                                         file:String,
+                                         args:Tuple<String>) -> False
