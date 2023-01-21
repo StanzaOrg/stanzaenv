@@ -8,10 +8,6 @@ defpackage stanzaenv/paths :
 public defn relpath-to-stanzaenv () -> String :
   "bin/stanzaenv"
 
-;Relative path to stanza executable.
-public defn relpath-to-stanza () -> String :
-  "stanza"
-
 ;Path to the stanzaenv binary directory.
 public defn bin-dir (root:String) -> String :
   relative-to(root, "bin")
@@ -35,6 +31,11 @@ public defn default-installation-dir (sys:System) -> String|False :
 ;Return the directory that all the Stanza versions are stored.
 public defn stanza-version-dir (root:String) -> String :
   relative-to(root, "stanza")
+
+;Return the path to the stanza executable given the Stanza
+;installation directory.
+public defn stanza-exe-path (stanza-root:String) -> String :
+  relative-to(stanza-root, "stanza")
 
 ;Return the path to the Stanza directory.
 public defn stanza-version-path (stanzaenv-root:String, version:NamedVersion) -> String :

@@ -35,3 +35,10 @@ public defmulti spit (s:System, filename:String, snippet, append?:True|False) ->
 public defmulti resolve-path (s:System, path:String) -> String|False
 
 public defmulti read-file (s:System, path:String) -> ?
+
+public defmulti call-system (s:System,
+                             file:String,
+                             args:Tuple<String>,
+                             workdir:String|False,
+                             env-vars:Tuple<KeyValue<String,String>>|False) ->
+                            [Int, String]

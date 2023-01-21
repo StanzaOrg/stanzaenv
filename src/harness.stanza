@@ -13,6 +13,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/set-version
   import stanzaenv/config-syntax
   import stanzaenv/filetree
+  import stz/printing-utils
 
 ;============================================================
 ;================ Testing System States =====================
@@ -283,6 +284,19 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         
     defmethod list-dir (this, path:String) :
       list-dir(filetree, path)
+
+    defmethod call-system (this, 
+                           file:String,
+                           args:Tuple<String>,
+                           workdir:String|False,
+                           env-vars:Tuple<KeyValue<String,String>>|False) -> [Int, String] :
+      val items = [
+        simple-field("file", written(file))
+        simple-field("args", args)
+        falseable-field("workdir", workdir)
+        simple-field("env-vars", env-vars)]
+      println("MockSystem: call-system%_" % [colon-field-list(items)])
+      [0, ""]
       
     defmethod prompt-user (this, prompt:String) :
       ;Retrieve answer from prompt sequence.

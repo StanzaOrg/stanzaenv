@@ -42,7 +42,7 @@ defn check-new-version (sys:System,
         println("Warning: This Stanza version has not yet been installed. Please \
                  install it before using.")
     (version:LocalVersion) :
-      val fullpath = relative-to(path(version), relpath-to-stanza())
+      val fullpath = stanza-exe-path(path(version))
       if not file-exists?(sys, fullpath) :
         println("Warning: There was no 'stanza' executable found at location '%_'." % [fullpath])
     (version:SystemVersion) :

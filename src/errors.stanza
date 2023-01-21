@@ -112,6 +112,20 @@ public defstruct SystemStateError <: StanzaEnvError :
 defmethod print (o:OutputStream, e:SystemStateError) :
   print(o, "Unable to read the system state: %_" % [error(e)])
 
+;Occurs when we were unable to install a specific Stanza version successfully.
+public defstruct StanzaInstallationError <: StanzaEnvError :
+  error:Exception
+
+defmethod print (o:OutputStream, e:StanzaInstallationError) :
+  print(o, "Unable to install Stanza: %_" % [error(e)])
+
+;Occurs when the 'stanza install' command fails.
+public defstruct InstallationCommandFailed <: StanzaEnvError :
+  message:String
+
+defmethod print (o:OutputStream, e:InstallationCommandFailed) :
+  print(o, "Error occurred during 'stanza install' command. %_" % [message(e)])
+
 ;Occurs when we were unable to read the system state.
 public defstruct ConfigChangeError <: StanzaEnvError :
   error:Exception
