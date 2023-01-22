@@ -3,7 +3,7 @@ include "src/lib-zip/stanza.proj"
 packages stanzaenv/* defined-in "src"
 
 package curl requires :
-  dynamic-library: "libcurl.dylib"
+  dynamic-library: "libcurlbindings.dylib"
   ccflags: 
     "-L{.}/bin/dylibs"
     "-lcurlbindings"
