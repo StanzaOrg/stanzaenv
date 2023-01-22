@@ -1,0 +1,33 @@
+defpackage build :
+  import core
+  import collections
+  import arg-parser
+
+val BUILD-COMMAND = Command(
+  "build"
+  ZeroArg, false,
+  [],
+  "Builds Stanzaenv."
+  false,
+  fn (cmd-args) :
+
+    ;Clean the build folder.
+    delete-recursive("build")
+    create-dir-recursive("build")
+    create-dir-recursive("build/outputs")
+
+    ;Build the main
+    call-system(["stanza" "build" "stanzaenv-osx"])
+
+    ;Zip the archive
+    create-dir-recursive("build/staging/stanzaenv-osx")
+    create-dir-recursive("build/staging/stanzaenv-osx/bin")
+    copy-file("build/stanzaenv-osx", "build/staging/stanzaenv-osx/bin/stanzaenv")
+    call-system(["zip" "-r" "build/outputs/stanzaenv-osx.zip" "build/staging/stanzaenv-osx"])
+)
+
+simple-command-line-cli(
+  false,
+  [BUILD-COMMAND]
+  "build"
+  true)
