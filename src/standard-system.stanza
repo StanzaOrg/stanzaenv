@@ -4,6 +4,7 @@ defpackage stanzaenv/standard-system :
   import reader
   import stanzaenv/request-exit
   import stanzaenv/system-api
+  import stanzaenv/sysutils
 
 public deftype StandardSystem <: System
 
@@ -51,6 +52,9 @@ defmethod move-dir (s:StandardSystem, old-path:String, new-path:String) -> False
 
 defmethod copy-file (s:StandardSystem, old-path:String, new-path:String) -> False :
   copy-file(old-path, new-path)
+
+defmethod set-executable (s:StandardSystem, path:String) -> False :
+  chmod(path, 0o777)
 
 defmethod spit (s:StandardSystem, filename:String, snippet, append?:True|False) -> False :
   spit(filename, snippet, append?)

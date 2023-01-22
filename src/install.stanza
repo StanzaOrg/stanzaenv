@@ -37,8 +37,9 @@ defn fresh-install (sys:System) -> False :
     val url = stanzaenv-zip-url(current-platform(sys))
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
     download-to-file(sys, url, stanzaenv-zip)    
-    unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
+    unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))    
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
+    set-executable(sys, stanzaenv-exe-path(path(install-dir)))
     create-shims(sys, path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
@@ -51,6 +52,7 @@ defn create-shims (sys:System, root:String) -> False :
   val shim-paths = shim-paths(root)
   for shim in shim-paths do :
     copy-file(sys, stanzaenv-exe, shim)
+    set-executable(sys, shim)
         
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :
