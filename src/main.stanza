@@ -49,6 +49,7 @@ new-command $ Command(
   "Installs Stanzaenv."
   false
   fn (cmd-args) :
+    stanzaenv/debugenv/initialize-debugenv()
     stanzaenv/install/install-stanzaenv(new StandardSystem)
 )
 
@@ -58,11 +59,10 @@ new-command $ Command(
 
 new-command $ Command(
   "install-version"
-  OneArg, "The Stanza version to install. E.g. '0.17.4'."
+  OneArg, "the Stanza version to install. E.g. '0.17.4'."
   [],
   "Downloads and installs a particular version of Stanza."
   false,
-  
   fn (cmd-args) :
     val version-str = arg(cmd-args,0)
     if parse-named-version(version-str) is False :
@@ -79,6 +79,50 @@ new-command $ Command(
       version,
       install-path(state))
 )
+
+;============================================================
+;===================== Set Version ==========================
+;============================================================
+
+new-command $ Command(
+  "set-version"
+  AtLeastOneArg, "the Stanza version to set for the system."
+  [],
+  "Set the global Stanza version."
+  false,
+  fn (cmd-args) :
+    val v = parse-version(args(cmd-args))
+    if v is False :
+      throw(Exception("Not a valid version specifier."))
+    stanzaenv/debugenv/initialize-debugenv()
+    val sys = new StandardSystem
+    val state = system-state(sys)
+    stanzaenv/set-version/set-global-stanza-version(
+      sys,
+      v as VersionSpecifier,
+      system-state(sys)))
+
+;============================================================
+;===================== Set Project Version ==================
+;============================================================
+
+new-command $ Command(
+  "set-project-version"
+  AtLeastOneArg, "the Stanza version to set for the project."
+  [],
+  "Set the project Stanza version."
+  false,
+  fn (cmd-args) :
+    val v = parse-version(args(cmd-args))
+    if v is False :
+      throw(Exception("Not a valid version specifier."))
+    stanzaenv/debugenv/initialize-debugenv()
+    val sys = new StandardSystem
+    val state = system-state(sys)
+    stanzaenv/set-version/set-project-stanza-version(
+      sys,
+      v as VersionSpecifier,
+      system-state(sys)))
 
 ;============================================================
 ;======================== Launch ============================

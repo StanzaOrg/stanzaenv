@@ -63,3 +63,15 @@ public defn parse-named-version (str:String) -> NamedVersion|False :
     for x in [a, b, c] do :
       fail() when x < 0 or x > 1000
     NamedVersion([a b c])
+
+;Parses the list of strings for a version specifier.
+public defn parse-version (strs:Tuple<String>) -> VersionSpecifier|False :
+  switch(length(strs)) :
+    1 :
+      if strs[0] == "system" : SystemVersion()
+      else : parse-named-version(strs[0])
+    2 :
+      if strs[0] == "local" : LocalVersion(strs[1])
+      else : false
+    else :
+      false
