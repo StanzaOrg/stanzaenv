@@ -17,7 +17,7 @@ defmethod file-exists? (s:StandardSystem, name:String) -> True|False :
   file-exists?(name)
 
 defmethod create-dir (s:StandardSystem, name:String) -> False :
-  create-dir(name)
+  create-dir-recursive(name)
 
 defmethod list-dir (s:StandardSystem, name:String) -> Tuple<String> :
   dir-files(name)

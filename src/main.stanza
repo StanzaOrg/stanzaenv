@@ -2,6 +2,11 @@ defpackage stanzaenv/main :
   import core
   import collections
   import arg-parser
+  import stanzaenv/standard-system
+  import stanzaenv/system-state
+  import stanzaenv/read-state
+  import stanzaenv/request-exit
+  import stanzaenv/versions
 
 ;============================================================
 ;====================== Framework ===========================
@@ -25,7 +30,7 @@ val VERSION-MSG =
 
 new-command $ Command(
   "version"
-  ZeroArg false
+  ZeroArg, false
   []
   "Displays the Stanzaenv version."
   false
@@ -34,11 +39,53 @@ new-command $ Command(
 )
 
 ;============================================================
+;=================== Installation Command ===================
+;============================================================
+
+new-command $ Command(
+  "install"
+  ZeroArg, false,
+  [],
+  "Installs Stanzaenv."
+  false
+  fn (cmd-args) :
+    stanzaenv/install/install-stanzaenv(new StandardSystem)
+)
+
+;============================================================
+;================= Install Stanza Command ===================
+;============================================================
+
+new-command $ Command(
+  "install-version"
+  OneArg, "The Stanza version to install. E.g. '0.17.4'."
+  [],
+  "Downloads and installs a particular version of Stanza."
+  false,
+  
+  fn (cmd-args) :
+    val version-str = arg(cmd-args,0)
+    if parse-named-version(version-str) is False :
+      throw(Exception("%_ is an invalid version number. \
+                      Version is expected to look like '0.17.4'." % [version-str]))
+                      
+  fn (cmd-args) :
+    val sys = new StandardSystem
+    val version = parse-named-version(arg(cmd-args,0)) as NamedVersion
+    val state = system-state(sys)
+    stanzaenv/install-version/install-stanza-version(
+      new StandardSystem,
+      version,
+      install-path(state))
+)
+
+;============================================================
 ;======================== Launch ============================
 ;============================================================
 
-simple-command-line-cli(
-  VERSION-MSG,
-  to-tuple(ENV-ACTIONS),
-  "help",
-  true)
+within with-requested-exit() :
+  simple-command-line-cli(
+    VERSION-MSG,
+    to-tuple(ENV-ACTIONS),
+    "help",
+    true)
