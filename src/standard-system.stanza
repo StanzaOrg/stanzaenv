@@ -11,6 +11,8 @@ defpackage stanzaenv/standard-system :
 ;==================== Debugging Intercepts ==================
 ;============================================================
 
+add-var("INTERCEPT_STANZA_URL")
+
 ;============================================================
 ;==================== Implementation ========================
 ;============================================================
@@ -39,7 +41,18 @@ defmethod current-platform (s:StandardSystem) -> Platform :
   CURRENT-PLATFORM
 
 defmethod download-to-file (s:StandardSystem, url:String, filename:String) -> False :
-  stanzaenv/download/download-from-url(url, filename)
+  if debug-env-enabled?() :
+    val stanza-url = "http://lbstanza.org/resources/stanza/"
+    switch prefix?{url, _} :
+      stanza-url :
+        val path = get-var("INTERCEPT_STANZA_URL")
+        val suffix = url[length(stanza-url) to false]
+        val fullpath = string-join([path, suffix])
+        copy-file(fullpath, filename)
+      else :
+        fatal("Cannot intercept URL %~." % [url])
+  else :
+    stanzaenv/download/download-from-url(url, filename)
 
 defmethod unzip-to-folder (s:StandardSystem, zipfile:String, folder:String) -> False :
   stanzaenv/unzip/unzip-to-dir(zipfile, folder)

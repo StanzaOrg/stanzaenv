@@ -70,6 +70,7 @@ new-command $ Command(
                       Version is expected to look like '0.17.4'." % [version-str]))
                       
   fn (cmd-args) :
+    stanzaenv/debugenv/initialize-debugenv()
     val sys = new StandardSystem
     val version = parse-named-version(arg(cmd-args,0)) as NamedVersion
     val state = system-state(sys)

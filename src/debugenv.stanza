@@ -23,10 +23,16 @@ public defn add-var (name:String) -> False :
 public defn get-var (name:String) -> ? :
   get-var-value(name)
 
+;Return true if the debugger environment is enabled.
+public defn debug-env-enabled? () -> True|False :
+  ensure-initialization!()
+  DEBUG-ENV-ENABLED?
+
 ;Initialize the debug environment.
 public defn initialize-debugenv () -> False :
   ensure-preinitialization!()
   if debugenv-enabled() :
+    DEBUG-ENV-ENABLED? = true
     parse-debug-vars()
   DEBUG-ENV-INITIALIZED? = true
 
@@ -51,6 +57,9 @@ val VAR-VALUES = HashTable<String,?>()
 
 ;Hold true if the debug environment has already been initialized.
 var DEBUG-ENV-INITIALIZED?:True|False = false
+
+;Holds true if the debugger environment is enabled.
+var DEBUG-ENV-ENABLED?:True|False = false
 
 ;============================================================
 ;==================== Configuration =========================
