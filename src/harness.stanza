@@ -274,6 +274,9 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
       println("MockSystem: copy-file(%~, %~)" % [oldpath, newpath])
       copy-file(filetree, oldpath, newpath)      
 
+    defmethod set-executable (this, path:String) :
+      println("MockSystem: set-executable(%~)" % [path])
+
     defmethod resolve-path (this, path:String) :
       val result = resolve(filetree, path)
       println("MockSystem: resolve-path(%~) = %~" % [path, result])      
