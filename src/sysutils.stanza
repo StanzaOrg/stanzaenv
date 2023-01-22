@@ -8,5 +8,11 @@ extern chmod: (ptr<byte>, int) -> int
 ;Call chmod on the given path.
 public lostanza defn chmod (path:ref<String>, mode:ref<Int>) -> ref<False> :
   val result = call-c chmod(addr!(path.chars), mode.value)
-  if result : throw(IOException(core/linux-error-msg()))
+  if result : throw(ChmodException(core/linux-error-msg()))
   return false
+
+;Occurs when the call to chmod fails.
+public defstruct ChmodException <: IOException :
+  value:String
+defmethod print (o:OutputStream, e:ChmodException) :
+  print(value(e))

@@ -5,6 +5,15 @@ defpackage stanzaenv/standard-system :
   import stanzaenv/request-exit
   import stanzaenv/system-api
   import stanzaenv/sysutils
+  import stanzaenv/debugenv
+
+;============================================================
+;==================== Debugging Intercepts ==================
+;============================================================
+
+;============================================================
+;==================== Implementation ========================
+;============================================================
 
 public deftype StandardSystem <: System
 

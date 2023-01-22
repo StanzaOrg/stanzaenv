@@ -13,13 +13,19 @@ defpackage stanzaenv/debugenv :
 public defn add-var (name:String, default:Maybe, parse:String -> ?) -> False :
   add-var(DebugVar(name, default, parse))
 
+public defn add-var (name:String, default:Maybe) -> False :
+  add-var(name, default, identity-parse)
+
+public defn add-var (name:String) -> False :
+  add-var(name, None(), identity-parse)
+
 ;Retrieve a variable from the debug environment.
 public defn get-var (name:String) -> ? :
   get-var-value(name)
 
 ;Initialize the debug environment.
 public defn initialize-debugenv () -> False :
-  ensure-pre-initialization!()
+  ensure-preinitialization!()
   if debugenv-enabled() :
     parse-debug-vars()
   DEBUG-ENV-INITIALIZED? = true
@@ -35,7 +41,7 @@ defstruct DebugVar :
   parse:String -> ?
 
 ;Default parse function does nothing.
-defn identify-parse (s:String) : s
+defn identity-parse (s:String) : s
 
 ;Hold the declarations of each variable.
 val VAR-DECLS = HashTable<String,DebugVar>()
@@ -52,7 +58,7 @@ var DEBUG-ENV-INITIALIZED?:True|False = false
 
 ;Add a new variable declaration.
 defn add-var (v:DebugVar) -> False :
-  ensure-pre-initialization!()
+  ensure-preinitialization!()
   if key?(VAR-DECLS, name(v)) :
     fatal("A debug variable with name %~ already exists." % [name(v)])
   VAR-DECLS[name(v)] = v
@@ -96,7 +102,7 @@ defn debugenv-enabled () -> True|False :
     "" :
       true
     else :
-      throw(DebugenvError("Invalid setting of ENABLE_DEBUGENV: %~." % [setting]))
+      throw(DebugenvError(to-string("Invalid setting of ENABLE_DEBUGENV: %~." % [setting])))
 
 ;Parse all the debug variables.
 defn parse-debug-vars () -> False :
