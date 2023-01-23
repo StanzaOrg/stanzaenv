@@ -1,0 +1,23 @@
+defpackage stanzaenv/windows-registry :
+  import core
+  import collections
+
+;External definitions.
+extern windows_get_registry: (long, ptr<byte>, ptr<byte>) -> ptr<byte>
+extern windows_set_registry: (long, ptr<byte>, ptr<byte>, ptr<byte>, long) -> int
+
+;Lostanza Definitions
+lostanza defn windows-get-registry (key:ref<Long>, subkey:ref<String>, value:ref<String>) -> ref<String> :
+  val result = call-c windows_get_registry(key.value, addr!(subkey.chars), addr!(value.chars))
+  if result != null :
+    val s = String(result)
+    call-c clib/free(result)
+    return s
+  else :
+    return throw(Exception(String("Failed")))
+
+lostanza defn windows-set-registry (key:ref<Long>, subkey:ref<String>, value:ref<String>, data:ref<String>) -> ref<Int> :
+  val result = call-c windows_set_registry(key.value, addr!(subkey.chars), addr!(value.chars), addr!(data.chars), data.length)
+  return new Int{result}
+
+val HKEY-CURRENT-USER = 0x80000001L

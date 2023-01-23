@@ -2,6 +2,9 @@ include "src/lib-curl/stanza.proj"
 include "src/lib-zip/stanza.proj"
 packages stanzaenv/* defined-in "src"
 
+package stanzaenv/windows-registry requires :
+  dynamic-library: "windows-registry.dll"
+
 package curl requires :
   dynamic-library: "libcurlbindings.dylib"
   ccflags: 
