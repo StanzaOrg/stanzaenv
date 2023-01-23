@@ -40,15 +40,18 @@ Standalone System Functionality:
 
   @[file:download.stanza] Handles how to download from a URL.
 
-  @[file:versions.stanza] Small utilities for handling version strings.
+  @[file:windows-registry.stanza] Handles how to write/read the Windows registry.
+  @[file:windows-registry.c] C bindings for Windows registry.
+
+  @[file:versions.stanza] Small utilities for handling version strings and VersionSpecifier.
 
 ## Curl Bindings ##
 
-@[file:lib-curl/curl.c]
-@[file:lib-curl/lib-curl.stanza]
-@[file:lib-curl/stanza.proj]
+  @[file:lib-curl/curl.c]
+  @[file:lib-curl/lib-curl.stanza]
+  @[file:lib-curl/stanza.proj]
 
 ## LibZip Bindings ##
 
-@[file:lib-zip/lib-zip.stanza]
-@[file:lib-zip/stanza.proj]
+  @[file:lib-zip/lib-zip.stanza]
+  @[file:lib-zip/stanza.proj]
