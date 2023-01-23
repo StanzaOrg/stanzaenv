@@ -28,10 +28,14 @@ public defn install-stanza-version (sys:System,
 ;Run the "stanza install" command.
 defn run-install-command (sys:System, stanza-dir:String) -> False :
   val stanza-exe = stanza-exe-path(stanza-dir)
+  val platform-str = switch(current-platform(sys)) :
+    OS-X : "os-x"
+    Linux : "linux"
+    Windows : "windows"
   val [ret, output] = call-system(
                      sys
                      stanza-exe
-                     [stanza-exe "install" "-path" "."]
+                     [stanza-exe "install" "-platform" platform-str "-path" "."]
                      stanza-dir
                      false)
   if ret != 0 :

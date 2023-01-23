@@ -3,6 +3,22 @@ defpackage build :
   import collections
   import arg-parser
 
+;============================================================
+;=================== Build Folder Structure =================
+;============================================================
+
+;Clean and reset the build folder.
+defn reset-build-folder () :
+  delete-recursive("build")
+  val paths = [
+    "build/outputs"
+    "build/staging/stanzaenv-osx"]
+  do(create-dir-recursive, paths)
+
+;============================================================
+;================= Build and Zip Stanzaenv ==================
+;============================================================
+
 val BUILD-COMMAND = Command(
   "build"
   ZeroArg, false,
@@ -11,20 +27,29 @@ val BUILD-COMMAND = Command(
   false,
   fn (cmd-args) :
 
-    ;Clean the build folder.
-    delete-recursive("build")
-    create-dir-recursive("build")
-    create-dir-recursive("build/outputs")
+    ;Get the current working directory.
+    val cwd = resolve-path!(".")
 
-    ;Build the main
+    ;Reset the build folder.
+    reset-build-folder()
+
+    ;Build the main program.
     call-system(["stanza" "build" "stanzaenv-osx"])
 
-    ;Zip the archive
-    create-dir-recursive("build/staging/stanzaenv-osx")
+    ;Create a reflection of the zip tree in build/staging/stanzaenv-osx
     create-dir-recursive("build/staging/stanzaenv-osx/bin")
-    copy-file("build/stanzaenv-osx", "build/staging/stanzaenv-osx/bin/stanzaenv")
-    call-system(["zip" "-r" "build/outputs/stanzaenv-osx.zip" "build/staging/stanzaenv-osx"])
+    copy-file("build/stanzaenv-osx", "build/staging/stanzaenv-osx/bin/stanzaenv")    
+
+    ;Zip the archive
+    val zipfile = to-string("%_/build/outputs/stanzaenv-osx.zip" % [cwd])
+    call-system("zip", ["zip" "-r" zipfile "."]
+                "build/staging/stanzaenv-osx"
+                false)
 )
+
+;============================================================
+;======================= Launch! ============================
+;============================================================
 
 simple-command-line-cli(
   false,

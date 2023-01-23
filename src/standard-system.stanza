@@ -2,6 +2,7 @@ defpackage stanzaenv/standard-system :
   import core
   import collections
   import reader
+  import core/parsed-path
   import stanzaenv/request-exit
   import stanzaenv/system-api
   import stanzaenv/sysutils
@@ -12,6 +13,7 @@ defpackage stanzaenv/standard-system :
 ;============================================================
 
 add-var("INTERCEPT_STANZA_URL")
+add-var("INTERCEPT_STANZAENV_URL")
 
 ;============================================================
 ;==================== Implementation ========================
@@ -45,9 +47,23 @@ defmethod download-to-file (s:StandardSystem, url:String, filename:String) -> Fa
     val stanza-url = "http://lbstanza.org/resources/stanza/"
     switch prefix?{url, _} :
       stanza-url :
-        val path = get-var("INTERCEPT_STANZA_URL")
-        val suffix = url[length(stanza-url) to false]
-        val fullpath = string-join([path, suffix])
+        ;Retrieve the filename.
+        val file = url[length(stanza-url) to false]
+
+        ;Get the forwarding path based on what file was requested.
+        val forwarding-dir = switch substring?{file, _} :
+          "stanzaenv" : get-var("INTERCEPT_STANZAENV_URL")
+          "stanza" : get-var("INTERCEPT_STANZA_URL")
+          else : fatal("Cannot intercept URL %~." % [url])
+
+        ;Get the full path to forward to.
+        val fullpath = string-join([forwarding-dir "/" file])
+
+        ;Ensure the file exists.
+        if not file-exists?(fullpath) :
+          throw(Exception("Forwarded path %~ does not exist." % [fullpath]))
+
+        ;Perform the file copy.
         copy-file(fullpath, filename)
       else :
         fatal("Cannot intercept URL %~." % [url])
@@ -70,7 +86,9 @@ defmethod prompt-user (s:StandardSystem, prompt:String) -> String :
     (f:False) : request-exit(0)
 
 defmethod move-dir (s:StandardSystem, old-path:String, new-path:String) -> False :
-  rename-file(old-path new-path)
+  val parsed = parse-path(new-path)
+  create-dir-recursive(to-string(enclosing-dir(parsed)))
+  rename-file(old-path, new-path)
 
 defmethod copy-file (s:StandardSystem, old-path:String, new-path:String) -> False :
   copy-file(old-path, new-path)

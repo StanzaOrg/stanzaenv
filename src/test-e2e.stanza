@@ -1,0 +1,45 @@
+#use-added-syntax(tests)
+defpackage stanzaenv/test-e2e :
+  import core
+  import collections
+  import zip
+
+deftest test-stanzaenv-contents :
+
+  ;Reset the testscratch folder.
+  val root = "testscratch"
+  delete-recursive(root)
+  create-dir-recursive(root)
+
+  ;Unzip the zip file contents. 
+  val zip = "build/outputs/stanzaenv-osx.zip"
+  extract(ZipArchive(zip), root)
+
+  ;List of expected files in .zip archive.
+  val expected-files = [
+    "bin/stanzaenv"]
+    
+  for file in expected-files do :
+    val fullpath = string-join([root "/" file])
+    #ASSERT(file-exists?(fullpath))
+    #ASSERT(file-type(fullpath) is RegularFileType)
+
+;deftest test-stanzaenv-install :
+let :
+  ;Reset scratch directory.
+  delete-recursive("testscratch")
+
+  ;Create a scratch directory for testing.
+  create-dir-recursive("testscratch")
+
+  ;Here is the mock HOME directory.
+  create-dir-recursive("testscratch/patrick")  
+
+  val exe = "build/stanzaenv-osx"
+  call-system(exe,
+              [exe, "install"]
+              false,
+              ["HOME" => resolve-path!("testscratch/patrick")
+               "ENABLE_DEBUGENV" => ""
+               "INTERCEPT_STANZA_URL" => "/Users/patricksli/Docs/Programming/stanzasite/resources/stanza"
+               "INTERCEPT_STANZAENV_URL" => resolve-path!("build/outputs")])

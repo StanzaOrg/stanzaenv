@@ -36,8 +36,8 @@ defn fresh-install (sys:System) -> False :
   within temp = make-temp-dir(sys, parent-dir) :    
     val url = stanzaenv-zip-url(current-platform(sys))
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
-    download-to-file(sys, url, stanzaenv-zip)    
-    unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))    
+    download-to-file(sys, url, stanzaenv-zip)
+    unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     set-executable(sys, stanzaenv-exe-path(path(install-dir)))
     create-shims(sys, path(install-dir))
@@ -177,8 +177,6 @@ defn install-initial-stanza-version (sys:System, install:EnvInstallation) -> Fal
   match(version) :
     (version:NamedVersion) :
       install-stanza-version(sys, version, path(install))
-      println(sys)
       set-global-stanza-version(sys, version, system-state(sys,install))
-      println(sys)
     (version:False) :
       println("Leaving Stanza uninstalled.")  
