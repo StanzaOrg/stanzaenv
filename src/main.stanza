@@ -17,6 +17,17 @@ val ENV-ACTIONS = Vector<Command>()
 defn new-command (c:Command) : add(ENV-ACTIONS, c)
 
 ;============================================================
+;===================== Initialize State =====================
+;============================================================
+
+;Initialize the system state.
+defn initialize-system () -> [System, SystemState] :
+  stanzaenv/debugenv/initialize-debugenv()
+  val sys = StandardSystem()
+  val state = system-state(sys)
+  [sys, state]
+
+;============================================================
 ;==================== Version Command =======================
 ;============================================================
 
@@ -70,10 +81,8 @@ new-command $ Command(
                       Version is expected to look like '0.17.4'." % [version-str]))
                       
   fn (cmd-args) :
-    stanzaenv/debugenv/initialize-debugenv()
-    val sys = StandardSystem()
     val version = parse-named-version(arg(cmd-args,0)) as NamedVersion
-    val state = system-state(sys)
+    val [sys, state] = initialize-system()
     stanzaenv/install-version/install-stanza-version(
       sys,
       version,
@@ -94,9 +103,7 @@ new-command $ Command(
     val v = parse-version(args(cmd-args))
     if v is False :
       throw(Exception("Not a valid version specifier."))
-    stanzaenv/debugenv/initialize-debugenv()
-    val sys = StandardSystem()
-    val state = system-state(sys)
+    val [sys, state] = initialize-system()
     stanzaenv/set-version/set-global-stanza-version(
       sys,
       v as VersionSpecifier,
@@ -116,13 +123,28 @@ new-command $ Command(
     val v = parse-version(args(cmd-args))
     if v is False :
       throw(Exception("Not a valid version specifier."))
-    stanzaenv/debugenv/initialize-debugenv()
-    val sys = StandardSystem()
-    val state = system-state(sys)
+    val [sys, state] = initialize-system()
     stanzaenv/set-version/set-project-stanza-version(
       sys,
       v as VersionSpecifier,
       system-state(sys)))
+
+;============================================================
+;===================== Remove Project Version ===============
+;============================================================
+
+new-command $ Command(
+  "clear-project-version"
+  ZeroArg, false,
+  [],
+  "Clears the project Stanza version."
+  false,
+  fn (cmd-args) :
+    val [sys, state] = initialize-system()
+    stanzaenv/set-version/clear-project-stanza-version(
+      sys,
+      system-state(sys))
+)
 
 ;============================================================
 ;====================== Classify Mode =======================
@@ -154,12 +176,11 @@ defn launch-mode () -> LaunchMode :
 defn main () :
   match(launch-mode()) :
     (mode:ShimMode) :
-      stanzaenv/debugenv/initialize-debugenv()
-      val sys = StandardSystem()
+      val [sys, state] = initialize-system()
       stanzaenv/call-stanza/call-stanza(
         sys,
         to-tuple(command-line-arguments()),
-        system-state(sys))
+        state)
     (mode:MainMode) : 
       within with-requested-exit() :
         simple-command-line-cli(
