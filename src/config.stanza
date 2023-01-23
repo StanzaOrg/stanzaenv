@@ -13,7 +13,7 @@ defpackage stanzaenv/config :
 ;Represents the config file.
 public defstruct ConfigFile :
   location:ParsedPath
-  stmts:Tuple<ConfigStmt>
+  stmts:Tuple<ConfigStmt> with: (updater => sub-stmts)
 
 ;Represents a line in the config file.
 public deftype ConfigStmt
@@ -86,10 +86,22 @@ public defn resolve-relative (stmts:Tuple<ConfigStmt>, location:ParsedPath) -> T
 ;======================= Accessors ==========================
 ;============================================================
 
+;Create a fresh config file containing just a version specifier.
+public defn ConfigFile (path:String, v:VersionSpecifier) -> ConfigFile :
+  val parsed = parse-path(path)
+  ConfigFile(parsed, [VersionStmt(v)])
+
 ;Return the version specified in the config file.
 public defn version (f:ConfigFile) -> VersionSpecifier :
   val stmt = find-by!<VersionStmt>(stmts(f))
   version(stmt)
+
+;Return a new configuration file with a different version specifier.
+public defn sub-version (f:ConfigFile, v:VersionSpecifier) -> ConfigFile :
+  val new-stmts = for stmt in stmts(f) map :
+    match(stmt:VersionStmt) : VersionStmt(v)
+    else : stmt
+  sub-stmts(f, new-stmts)
 
 ;============================================================
 ;===================== Printers =============================
