@@ -1,8 +1,10 @@
 defpackage stanzaenv/config :
   import core
   import collections
+  import core/parsed-path
   import stanzaenv/versions
   import stanzaenv/errors
+  import stz/printing-utils
 
 ;============================================================
 ;====================== Representation ======================
@@ -10,6 +12,7 @@ defpackage stanzaenv/config :
 
 ;Represents the config file.
 public defstruct ConfigFile :
+  location:ParsedPath
   stmts:Tuple<ConfigStmt>
 
 ;Represents a line in the config file.
@@ -19,11 +22,24 @@ public deftype ConfigStmt
 public defstruct VersionStmt <: ConfigStmt :
   version:VersionSpecifier
 
+;Records the name of an extension to use.
+public defstruct ExtensionStmt <: ConfigStmt :
+  path:ParsedPath
+
+;Records the addtional pkg directories to search in.
+public defstruct PkgDirsStmt <: ConfigStmt :
+  paths:Tuple<ParsedPath>
+
+;Records the additional proj files to include.
+public defstruct ProjFilesStmt <: ConfigStmt :
+  paths:Tuple<ParsedPath>
+
 ;============================================================
 ;====================== Validator ===========================
 ;============================================================
 
-public defn validate (f:ConfigFile) -> False :
+;Validate that the configuration file is proper.
+public defn validate (stmts:Tuple<ConfigStmt>, location:String) -> False :
   ;Track number of times each statement appears.
   val count-table = HashTable<Symbol,Int>(0)  
   defn increment-count (name:Symbol) -> False :
@@ -31,15 +47,40 @@ public defn validate (f:ConfigFile) -> False :
     false
 
   ;Count each type of statement.
-  for stmt in stmts(f) do :
+  for stmt in stmts do :
     match(stmt) :
       (stmt:VersionStmt) : increment-count(`version-stmt)
+      (stmt:ExtensionStmt) : increment-count(`extension-stmt)
+      (stmt:PkgDirsStmt) : increment-count(`pkg-dirs-stmt)
+      (stmt:ProjFilesStmt) : increment-count(`proj-files-stmt)
 
   ;Validate.
   if count-table[`version-stmt] == 0 :
-    throw(ConfigFileError("Missing version statement in config file."))
+    throw(ConfigFileError(location, "Missing version statement in config file."))
   else if count-table[`version-stmt] > 1 :
-    throw(ConfigFileError("Multiple version statements in config file."))
+    throw(ConfigFileError(location, "Multiple version statements in config file."))
+  if count-table[`pkg-dirs-stmt] > 1 :
+    throw(ConfigFileError(location, "Multiple pkg-dirs statements in config file."))
+  if count-table[`proj-files-stmt] > 1 :
+    throw(ConfigFileError(location, "Multiple proj-files statements in config file."))
+
+;============================================================
+;==================== Resolve Relative ======================
+;============================================================
+
+;Extension statements contain a path that is relative to the
+;location of the config file itself, resolve it here.
+public defn resolve-relative (stmts:Tuple<ConfigStmt>, location:ParsedPath) -> Tuple<ConfigStmt> :
+  ;Helpers: Make relative to given location.
+  defn relative-to-loc (p:ParsedPath) : relative-to-dir(location, p)
+  defn relative-to-loc (ps:Tuple<ParsedPath>) : map(relative-to-loc, ps)
+  
+  for stmt in stmts map :
+    match(stmt) :
+      (stmt:ExtensionStmt) : ExtensionStmt(relative-to-loc(path(stmt)))
+      (stmt:PkgDirsStmt) : PkgDirsStmt(relative-to-loc(paths(stmt)))
+      (stmt:ProjFilesStmt) : ProjFilesStmt(relative-to-loc(paths(stmt)))
+      (stmt) : stmt
 
 ;============================================================
 ;======================= Accessors ==========================
@@ -59,3 +100,14 @@ defmethod print (o:OutputStream, f:ConfigFile) :
 
 defmethod print (o:OutputStream, s:VersionStmt) :
   print(o, "stanza-version: %~" % [version(s)])
+
+defmethod print (o:OutputStream, s:ExtensionStmt) :
+  print(o, "extension: %~" % [to-string(path(s))])
+
+defmethod print (o:OutputStream, s:PkgDirsStmt) :
+  val items = seq(written{to-string(_)}, paths(s))
+  print(o, "pkg-dirs%_" % [colon-field-list(items)])
+
+defmethod print (o:OutputStream, s:ProjFilesStmt) :
+  val items = seq(written{to-string(_)}, paths(s))
+  print(o, "proj-files%_" % [colon-field-list(items)])

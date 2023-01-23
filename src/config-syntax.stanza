@@ -1,6 +1,7 @@
 defpackage stanzaenv/config-syntax :
   import core
   import collections
+  import core/parsed-path
   import stanzaenv/system-api
   import stanzaenv/config
   import stanzaenv/versions
@@ -11,25 +12,21 @@ defpackage stanzaenv/config-syntax :
 ;============================================================
 
 ;Parse a stanzaenv config file.
-public defn parse-config-file (forms:List) -> ConfigFile :
-  parse-syntax[stanzaenv-syntax / #config-file](forms)
+public defn parse-config-file (forms:List, location:String) -> ConfigFile :
+  val path = parse-path(location)
+  val stmts = to-tuple(parse-syntax[stanzaenv-syntax / #stmt! ...](forms))
+  validate(stmts, location)
+  ConfigFile(path, resolve-relative(stmts, path))
 
 ;Read a stanzaenv config file.
 public defn read-config-file (sys:System, file:String) -> ConfigFile :
-  parse-config-file(read-file(sys,file))
+  parse-config-file(read-file(sys,file), file)
 
 ;============================================================
 ;=================== Syntax Definition ======================
 ;============================================================
 
 defsyntax stanzaenv-syntax :
-
-  ;Read a config file.
-  public defproduction config-file:ConfigFile
-  defrule config-file = (?stmts:#stmt! ...) :
-    val file = ConfigFile(to-tuple(stmts))
-    validate(file)
-    file
 
   ;Represents the version specifier. 
   defproduction version: VersionSpecifier
@@ -43,20 +40,41 @@ defsyntax stanzaenv-syntax :
       (f:False) : throw(ConfigSyntaxError(closest-info(), "Invalid version string."))
 
   ;Represents possible statements in the config file.
-  defproduction stmt: ConfigStmt
+  public defproduction stmt: ConfigStmt
+  
   defrule stmt = (stanza-version: ?v:#version!) :
     VersionStmt(v)
+    
+  defrule stmt = (extension: ?path:#path!) :
+    val n = length(entries(path))
+    val last-entry = entries(path)[n - 1]
+    if last-entry is-not NamedPath :
+      throw(ConfigSyntaxError(closest-info(), "Invalid path to extension executable for Stanza."))
+    ExtensionStmt(path)
+
+  defrule stmt = (pkg-dirs: (?paths:#path! ...)) :
+    PkgDirsStmt(to-tuple(paths))
+
+  defrule stmt = (proj-files: (?paths:#path! ...)) :
+    ProjFilesStmt(to-tuple(paths))
 
   ;Primitive productions
   defproduction string: String
   defrule string = (?x) when unwrap-token(x) is String : unwrap-token(x)
 
+  defproduction path: ParsedPath
+  defrule path = (?s:#string) : parse-path(s)
+
   ;Error productions
+  defproduction path!: ParsedPath
+  defrule path! = (?v:#path)
+  fail-if path! = () : ConfigSyntaxError(closest-info(), "Invalid path.")
+  
   defproduction version!: VersionSpecifier
   defrule version! = (?v:#version)
   fail-if version! = () : ConfigSyntaxError(closest-info(), "Invalid version specifier.")
 
-  defproduction stmt!: ConfigStmt
+  public defproduction stmt!: ConfigStmt
   defrule stmt! = (?v:#stmt)
   fail-if stmt! = () : ConfigSyntaxError(closest-info(), "Invalid configuration file statement.")
 

@@ -451,28 +451,34 @@ defn try-parse-config-1 () :
   version: "0.1"
   <STR>
   within print-errors() :
-    parse-config-file(reader/read-all(str))
+    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
 
 defn try-parse-config-2 () :
   val str = \<STR>
   stanza-version: "0.1.17"
   <STR>
   within print-errors() :
-    parse-config-file(reader/read-all(str))
+    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
 
 defn try-parse-config-3 () :
   val str = \<STR>
   stanza-version: local "mypath"
   <STR>
   within print-errors() :
-    parse-config-file(reader/read-all(str))
+    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
 
 defn try-parse-config-4 () :
   val str = \<STR>
   stanza-version: system
+  extension: "bin/mystanza"
+  pkg-dirs:
+    "pkgs"
+  proj-files:
+    "projs/project.proj"
+    "projs/subproject.proj"
   <STR>
   within print-errors() :
-    parse-config-file(reader/read-all(str))
+    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
 
 ;============================================================
 ;===================== Try Out Read State ===================
@@ -727,9 +733,16 @@ within (package,sig) = set-stack-trace-filter() :
 ;try-install-1()
 ;println("try-install-2")
 ;try-install-2()
-println("try-install-3")
-try-install-3()
-;try-parse-config-4()
+;println("try-install-3")
+;try-install-3()
+println("try-parse-config-1")
+try-parse-config-1()
+println("try-parse-config-2")
+try-parse-config-2()
+println("try-parse-config-3")
+try-parse-config-3()
+println("try-parse-config-4")
+try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()
 ;try-read-state-3()

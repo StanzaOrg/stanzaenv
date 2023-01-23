@@ -37,7 +37,7 @@ val VERSION-MSG =
                     Stanzaenv
          Stanza Environment and Version Manager
 
-                 Version 0.0.0
+                 Version %_.%_.%_
 <STR>
 
 new-command $ Command(
@@ -47,7 +47,8 @@ new-command $ Command(
   "Displays the Stanzaenv version."
   false
   fn (cmd-args) :
-    println(VERSION-MSG)
+    val [a b c] = stanzaenv/current-version/CURRENT-VERSION
+    println(VERSION-MSG % [a, b, c])
 )
 
 ;============================================================

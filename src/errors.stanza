@@ -95,10 +95,11 @@ defmethod print (o:OutputStream, e:ConfigSyntaxError) :
 
 ;Occurs when the configuration file is ill-formed.
 public defstruct ConfigFileError <: StanzaEnvError :
+  filename:String
   msg
 
 defmethod print (o:OutputStream, e:ConfigFileError) :
-  print(o, msg(e))
+  print(o, "Invalid configuration file '%_': %_" % [filename(e), msg(e)])
 
 ;Occurs when 'stanzaenv' is not installed, and some operation
 ;was performed that depends upon it.
