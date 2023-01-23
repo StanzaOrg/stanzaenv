@@ -1,0 +1,73 @@
+defpackage stanzaenv/mock-prompter :
+  import core
+  import collections
+
+;============================================================
+;========================= API ==============================
+;============================================================
+
+public deftype MockPrompter
+
+public defmulti prompt (p:MockPrompter, prompt:String) -> String
+
+;============================================================
+;==================== Implementation ========================
+;============================================================
+
+;Create a MockPrompter from a bunch of key-value pairs.
+public defn MockPrompter (entries:Seqable<KeyValue<String,String>>) :
+  val prompt-seq = to-seq(entries)
+
+  new MockPrompter :
+
+    defmethod prompt (this, prompt:String) :
+      ;Retrieve the next answer from the prompt sequence.
+      val answer = if not empty?(prompt-seq) :
+        val entry = peek(prompt-seq)
+        if substring?(prompt, key(entry)) :
+          value(next(prompt-seq))
+      ;If there is no answer, then throw exception.
+      if answer is False :
+        ;If there's no more entries.
+        if empty?(prompt-seq) :
+          println(prompt)
+          throw(PromptError("No more answers in the prompt sequence."))
+        else :
+          val expected = key(peek(prompt-seq))
+          println(prompt)
+          throw(PromptError(to-string("Unexpected prompt: Expected prompt is about %~." % [expected])))
+      ;Otherwise, there is an answer, so just return it.
+      else :
+        println("%_%_" % [prompt, answer])
+        answer as String          
+
+;Create a MockPrompter from a bunch of key-value pairs on disk.
+public defn FileMockPrompter (filename:String) :
+  val forms = reader/read-file(filename)
+  val entries = to-tuple(parse-syntax[prompts / #prompt ...](forms))
+  MockPrompter(entries)
+
+;============================================================
+;================== Syntax for Prompts ======================
+;============================================================
+
+defsyntax prompts :
+  public defproduction prompt: KeyValue<String,String>
+  defrule prompt = (?prompt:#string => ?response:#string) :
+    prompt => response
+  fail-if prompt = () :
+    Exception("%_: Invalid syntax for prompt." % [closest-info()])
+
+  defproduction string: String
+  defrule string = (?x) when unwrap-token(x) is String :
+    unwrap-token(x)
+
+;============================================================
+;====================== Errors ==============================
+;============================================================
+
+public defstruct PromptError <: Exception :
+  message:String
+  
+defmethod print (o:OutputStream, e:PromptError) :
+  print(o, message(e))

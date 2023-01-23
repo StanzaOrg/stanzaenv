@@ -14,6 +14,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/config-syntax
   import stanzaenv/filetree
   import stanzaenv/call-stanza
+  import stanzaenv/mock-prompter
   import stz/printing-utils
 
 ;============================================================
@@ -206,7 +207,7 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
   val filetree = FileTree(existing-files, working-dir)
 
   ;Use a sequence of prompts to mimic the user responses.
-  val prompt-seq = to-seq(prompts)
+  val prompter = MockPrompter(prompts)
   
   new System :
     defmethod print (o:OutputStream, this) :
@@ -317,23 +318,8 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         simple-field("args", args)]
       println("MockSystem: replace-current-process%_" % [colon-field-list(items)])
       
-    defmethod prompt-user (this, prompt:String) :
-      ;Retrieve answer from prompt sequence.
-      val answer = if not empty?(prompt-seq) :
-        val entry = peek(prompt-seq)
-        if substring?(prompt, key(entry)) :
-          next(prompt-seq)
-          value(entry)
-      ;Either return the answer or fatal.
-      match(answer:String) :
-        println("MockSystem: %_%_" % [prompt, answer])
-        answer
-      else :
-        println("MockSystem: %_" % [prompt])
-        if empty?(prompt-seq) :
-          fatal("No more answers in prompt sequence.")
-        else :
-          fatal("Next prompt in prompt sequence expected to be about %~." % [key(next(prompt-seq))])
+    defmethod prompt-user (this, question:String) :
+      prompt(prompter, question)
 
 ;============================================================
 ;==================== Try Out Install =======================
