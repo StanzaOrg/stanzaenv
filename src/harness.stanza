@@ -8,7 +8,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/urls
   import stanzaenv/system-state
   import stanzaenv/read-state
-  import stanzaenv/install
+;  import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
 ;  import stanzaenv/set-version
@@ -84,7 +84,7 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
   SystemState(
     installation()
     project-config()
-    wrap-config(version-spec())
+    wrap-config("/users/patrick/.stanzaenv/stanza.config", version-spec())
     path-status()
     installed-versions())
 
@@ -345,7 +345,7 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
 ;============================================================
 ;==================== Try Out Install =======================
 ;============================================================
-
+;<comment>
 ;Does not install Stanza at the end.
 defn try-install-0 () :
   val sys = MockSystem(
@@ -441,7 +441,7 @@ defn try-install-3 () :
     Windows)
     
   install-stanzaenv(sys)
-
+;<comment>
 ;============================================================
 ;================== Try parsing config file =================
 ;============================================================
