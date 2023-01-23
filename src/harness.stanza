@@ -3,6 +3,7 @@ defpackage stanzaenv/harness :
   import collections
   import core/parsed-path
   import stanzaenv/download
+  import stanzaenv/config
   import stanzaenv/unzip
   import stanzaenv/urls
   import stanzaenv/system-state
@@ -10,10 +11,10 @@ defpackage stanzaenv/harness :
   import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
-  import stanzaenv/set-version
+;  import stanzaenv/set-version
   import stanzaenv/config-syntax
   import stanzaenv/filetree
-  import stanzaenv/call-stanza
+;  import stanzaenv/call-stanza
   import stanzaenv/mock-prompter
   import stanzaenv/paths
   import stz/printing-utils
@@ -36,10 +37,13 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
     ;println("Use switch %_ for context %~." % [i, ctxt])
     i
 
-  defn project-version () -> ProjectVersion|False :
+  defn wrap-config (loc:String, v:VersionSpecifier) -> ConfigFile|False :
+    ConfigFile(parse-path(loc), [VersionStmt(v)])
+
+  defn project-config () -> ConfigFile|False :
     switch(int-switch("project-version", 2)) :
-      0 : ProjectVersion(".stanza_version", version-spec())
-      1 : ProjectVersion("../../.stanza_version", version-spec())
+      0 : wrap-config(".stanza_version", version-spec())
+      1 : wrap-config("../../.stanza_version", version-spec())
       2 : false    
       
   defn version-spec () -> VersionSpecifier :
@@ -79,8 +83,8 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
 
   SystemState(
     installation()
-    project-version()
-    version-spec()
+    project-config()
+    wrap-config(version-spec())
     path-status()
     installed-versions())
 
@@ -585,7 +589,7 @@ defn try-read-state-4 () :
 ;============================================================
 ;=================== Set Version ============================
 ;============================================================
-
+;<comment>
 defn try-set-state-1 () :
   val global-config = \<STR>
     stanza-version: "0.17.50"
@@ -616,6 +620,7 @@ defn try-set-state-1 () :
     OS-X)
   within print-errors() :
     println(set-global-stanza-version(sys, NamedVersion([0 17 50]), system-state(sys)))  
+;<comment>
 
 ;============================================================
 ;====================== Try File Tree =======================
@@ -686,6 +691,7 @@ defn try-filetree-4 () :
 ;=================== Try Call Stanza ========================
 ;============================================================
 
+;<comment>
 defn try-call-stanza () :
   val global-config = \<STR>
     stanza-version: "0.5.4"
@@ -716,7 +722,7 @@ defn try-call-stanza () :
     OS-X)
   within print-errors() :
     println(call-stanza(sys, ["stanza" "version" "-terse"], system-state(sys)))
-
+;<comment>
 ;============================================================
 ;==================== Main Launcher =========================
 ;============================================================
