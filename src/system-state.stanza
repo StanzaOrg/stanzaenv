@@ -4,6 +4,7 @@ defpackage stanzaenv/system-state :
   import stz/printing-utils
   import stanzaenv/versions
   import line-wrap
+  import stanzaenv/config
 
 ;============================================================
 ;==================== State Representation ==================
@@ -14,15 +15,10 @@ defpackage stanzaenv/system-state :
 ;- global-version: The global Stanza version.
 public defstruct SystemState :
   installation:EnvInstallation
-  project-version:ProjectVersion|False  
-  global-version:VersionSpecifier|False
+  project-config:ConfigFile|False  
+  global-config:ConfigFile|False
   path-status:PathStatus
   installed-versions:Tuple<InstalledStanza>
-
-;Represents a project-local version override for Stanza.
-public defstruct ProjectVersion :
-  filename: String
-  version: VersionSpecifier
 
 ;Represents the location where stanzaenv is installed.
 public deftype EnvInstallation
@@ -67,10 +63,10 @@ public defn installed? (state:SystemState, v:NamedVersion) -> True|False :
     version(installed) == v
 
 ;Returns the active Stanza version in effect.
-public defn active-version (state:SystemState) -> VersionSpecifier|False :
-  match(project-version(state)) :
-    (v:ProjectVersion) : version(v)
-    (f:False) : global-version(state)
+;public defn active-version (state:SystemState) -> VersionSpecifier|False :
+;  match(project-version(state)) :
+;    (v:ProjectVersion) : version(v)
+;    (f:False) : global-version(state)
 
 ;============================================================
 ;===================== Printers =============================
@@ -100,16 +96,12 @@ defmethod print (o:OutputStream, s:ConfigInstallation) :
 defmethod print (o:OutputStream, s:DefaultInstallation) :
   print(o, "Installed to %_" % [path(s)])
 
-defmethod print (o:OutputStream, v:ProjectVersion) :
-  print(o, "Version: %_" % [version(v)])
-  lnprint(o, "Configured by: %~" % [filename(v)])
-
 defmethod print (o:OutputStream, s:SystemState) :
   defn one? (x) : [] when x is False else [x]
   val items = [
-    named-emptyable-list-fields("project-version", one?(project-version(s)))
+    named-emptyable-list-fields("project-config", one?(project-config(s)))
     simple-field("installation", installation(s))
-    simple-field("global-version", global-version(s))
+    simple-field("global-config", one?(global-config(s)))
     path-status(s)
     named-list-fields("installed-versions", installed-versions(s))]
   print(o, "StanzaEnv SystemState%_" % [colon-field-list(items)])
@@ -157,9 +149,9 @@ public defn status-report (state:SystemState) :
     print(o, "Installation Type:\n\n")
     print(o, Indented(format(installation(state))))
     print(o, "\n\nProject-Specific Stanza Version:\n\n")
-    print(o, Indented(format(project-version(state))))
+    print(o, Indented(format-project-version(project-config(state))))
     print(o, "\n\nGlobal Stanza Version:\n\n")
-    print(o, Indented(format-global-version(global-version(state))))
+    print(o, Indented(format-global-version(global-config(state))))
     print(o, "\n\nInstalled Stanza Versions:\n\n")
     print(o, Indented(format(installed-versions(state))))
     print(o, "\n\nSystem PATH:\n\n")
@@ -174,19 +166,22 @@ defn format (install:EnvInstallation) :
         print(o, "Type: Custom installation to $STANZAENV_DIR.")
     lnprint(o, "Location: %_" % [path(install)])
 
-defn format (pv:ProjectVersion|False) :
+defn format-project-version (config:ConfigFile|False) :
   within o = printable() :
-    match(pv) :
-      (pv:ProjectVersion) :
-        print(o, format(version(pv)))
-        lnprint(o, "Configuration File: %_" % [filename(pv)])
-      (pv:False) :
+    match(config) :
+      (config:ConfigFile) :
+        print(o, format(version(config)))
+        lnprint(o, "Configuration File: %_" % [location(config)])
+      (config:False) :
         print(o, "No project-specific Stanza version set.")
 
-defn format-global-version (v:VersionSpecifier|False) :
-  match(v) :
-    (v:False) : "No global Stanza version set."
-    (v:VersionSpecifier) : format(v)
+defn format-global-version (config:ConfigFile|False) :
+  within o = printable() :
+    match(config) :
+      (config:ConfigFile) :
+        print(o, format(version(config)))
+      (config:False) :
+        print(o, "No glboal Stanza version set.")
 
 defn format (v:VersionSpecifier) :
   match(v) :
