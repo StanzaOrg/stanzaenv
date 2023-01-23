@@ -48,3 +48,11 @@ public defmulti call-system (s:System,
 public defmulti replace-current-process (s:System,
                                          file:String,
                                          args:Tuple<String>) -> False
+
+;Registry functions are only used for installation on Windows systems.
+;Used to permanently:
+;- Add 'stanzaenv/bin' to the PATH.
+;- Set the STANZAENV_DIR configuration variable.
+public defmulti get-registry (s:System, subkey:String, value:String) -> String
+
+public defmulti set-registry (s:System, subkey:String, value:String, data:String) -> False

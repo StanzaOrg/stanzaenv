@@ -8,8 +8,22 @@ defpackage stanzaenv/system-path :
 ;Retrieve the tuple of paths on the system PATH.
 public defn system-paths (sys:System) -> Tuple<String> :
   match(get-env(sys, "PATH")) :
-    (str:String) : to-tuple(split(str, ":"))
-    (f:False) : []
+    (str:String) :
+      val parts = split(str, path-delimiter(current-platform(sys)))
+      to-tuple(filter({not empty?(_)}, parts))
+    (f:False) :
+      []
+
+;Set the tuple of paths on the system PATH.
+public defn set-system-paths (sys:System, paths:Tuple<String>) -> False :
+  val path-string = string-join(paths, path-delimiter(current-platform(sys)))
+  set-env(sys, "PATH", path-string)
+
+;Helper: Return the delimiter used to separate paths on the PATH variable.
+defn path-delimiter (platform:Platform) -> String :
+  switch(platform) :
+    Windows : ";"
+    else : ":"
 
 ;Return the index of the given path on the path list.
 ;Returns false if not on the list.
@@ -34,7 +48,9 @@ public defn add-to-path (sys:System, path:String) -> False :
     BashShell :
       spit(sys, user-home(sys,".bashrc"), fill-template(BASH-EXPORT), true)
     CmdExe :
-      throw(CouldNotSetPathOnPlatform(Windows))
+      val old-path = get-registry(sys, "Environment", "Path")
+      val new-path = string-join([path ";" old-path])
+      set-registry(sys, "Environment", "Path", new-path)
     false :
       throw(CouldNotDetectShell())
 
@@ -47,7 +63,7 @@ public defn add-to-system-vars (sys:System, variable:String, value:String) -> Fa
     BashShell :
       spit(sys, user-home(sys,".bashrc"), fill-template(BASH-SET-VAR), true)
     CmdExe :
-      throw(CouldNotSetVarOnPlatform(Windows))
+      set-registry(sys, "Environment", variable, value)
     false :
       throw(CouldNotDetectShell())
 
@@ -90,10 +106,9 @@ public defn detect-shell (sys:System) -> Shell|False :
       switch substring?{str, _} :
         "zsh" : ZshShell
         "bash" : BashShell
-        else : false
+        else : CmdExe when current-platform(sys) == Windows          
     (f:False) :
-      if current-platform(sys) == Windows : CmdExe
-      else : false
+      CmdExe when current-platform(sys) == Windows
 
 ;Represents the different recognized shells.
 public defenum Shell :

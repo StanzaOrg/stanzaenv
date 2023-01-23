@@ -5,6 +5,7 @@ defpackage stanzaenv/call-stanza :
   import stanzaenv/system-state
   import stanzaenv/versions
   import stanzaenv/paths
+  import stanzaenv/system-path
   import stanzaenv/errors
   
 public defn call-stanza (sys:System,
@@ -49,13 +50,11 @@ defn launch-system-stanza (sys:System,
                            args:Tuple<String>,
                            state:SystemState) -> False :
   ;Gather the PATH elements that do not correspond to stanzaenv folder.
-  val path-parts =
+  val new-path = to-tuple $
     for (item in path(path-status(state)), i in 0 to false) filter :
       i != stanzaenv-index(path-status(state))
-  ;Form the new path.
-  val new-path = string-join(path-parts, ":")
   ;Set the new path, and then call stanza.
-  set-env(sys, "PATH", new-path)
+  set-system-paths(sys, new-path)
   replace-current-process(sys, args[0], args)
 
 ;Launch the Stanza executable
