@@ -50,7 +50,7 @@ new-command $ Command(
   false
   fn (cmd-args) :
     stanzaenv/debugenv/initialize-debugenv()
-    stanzaenv/install/install-stanzaenv(new StandardSystem)
+    stanzaenv/install/install-stanzaenv(StandardSystem())
 )
 
 ;============================================================
@@ -71,11 +71,11 @@ new-command $ Command(
                       
   fn (cmd-args) :
     stanzaenv/debugenv/initialize-debugenv()
-    val sys = new StandardSystem
+    val sys = StandardSystem()
     val version = parse-named-version(arg(cmd-args,0)) as NamedVersion
     val state = system-state(sys)
     stanzaenv/install-version/install-stanza-version(
-      new StandardSystem,
+      sys,
       version,
       install-path(state))
 )
@@ -95,7 +95,7 @@ new-command $ Command(
     if v is False :
       throw(Exception("Not a valid version specifier."))
     stanzaenv/debugenv/initialize-debugenv()
-    val sys = new StandardSystem
+    val sys = StandardSystem()
     val state = system-state(sys)
     stanzaenv/set-version/set-global-stanza-version(
       sys,
@@ -117,7 +117,7 @@ new-command $ Command(
     if v is False :
       throw(Exception("Not a valid version specifier."))
     stanzaenv/debugenv/initialize-debugenv()
-    val sys = new StandardSystem
+    val sys = StandardSystem()
     val state = system-state(sys)
     stanzaenv/set-version/set-project-stanza-version(
       sys,

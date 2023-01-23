@@ -7,6 +7,7 @@ defpackage stanzaenv/standard-system :
   import stanzaenv/system-api
   import stanzaenv/sysutils
   import stanzaenv/debugenv
+  import stanzaenv/mock-prompter
 
 ;============================================================
 ;==================== Debugging Intercepts ==================
@@ -14,6 +15,7 @@ defpackage stanzaenv/standard-system :
 
 add-var("INTERCEPT_STANZA_URL")
 add-var("INTERCEPT_STANZAENV_URL")
+add-var("INTERCEPT_PROMPTS", One(false))
 
 ;============================================================
 ;==================== Implementation ========================
@@ -21,111 +23,127 @@ add-var("INTERCEPT_STANZAENV_URL")
 
 public deftype StandardSystem <: System
 
-defmethod get-env (s:StandardSystem, name:String) -> String|False :
-  get-env(name)
+public defn StandardSystem () -> StandardSystem :
 
-defmethod set-env (s:StandardSystem, name:String, value:String) -> False :
-  set-env(name, value)
+  ;Create a mock prompter if necessary.
+  val prompter = if debug-env-enabled?() :
+    match(get-var("INTERCEPT_PROMPTS")) :
+      (file:String) : FileMockPrompter(file)
+      (f:False) : false
 
-defmethod file-exists? (s:StandardSystem, name:String) -> True|False :
-  file-exists?(name)
+  new StandardSystem :
+    defmethod get-env (this, name:String) -> String|False :
+      get-env(name)
 
-defmethod create-dir (s:StandardSystem, name:String) -> False :
-  create-dir-recursive(name)
+    defmethod set-env (this, name:String, value:String) -> False :
+      set-env(name, value)
 
-defmethod list-dir (s:StandardSystem, name:String) -> Tuple<String> :
-  dir-files(name)
+    defmethod file-exists? (this, name:String) -> True|False :
+      file-exists?(name)
 
-defmethod directory? (s:StandardSystem, path:String) -> True|False :
-  file-type(path) is DirectoryType
+    defmethod create-dir (this, name:String) -> False :
+      create-dir-recursive(name)
 
-defmethod current-platform (s:StandardSystem) -> Platform :
-  CURRENT-PLATFORM
+    defmethod list-dir (this, name:String) -> Tuple<String> :
+      dir-files(name)
 
-defmethod download-to-file (s:StandardSystem, url:String, filename:String) -> False :
-  if debug-env-enabled?() :
-    val stanza-url = "http://lbstanza.org/resources/stanza/"
-    switch prefix?{url, _} :
-      stanza-url :
-        ;Retrieve the filename.
-        val file = url[length(stanza-url) to false]
+    defmethod directory? (this, path:String) -> True|False :
+      file-type(path) is DirectoryType
 
-        ;Get the forwarding path based on what file was requested.
-        val forwarding-dir = switch substring?{file, _} :
-          "stanzaenv" : get-var("INTERCEPT_STANZAENV_URL")
-          "stanza" : get-var("INTERCEPT_STANZA_URL")
-          else : fatal("Cannot intercept URL %~." % [url])
+    defmethod current-platform (this) -> Platform :
+      CURRENT-PLATFORM
 
-        ;Get the full path to forward to.
-        val fullpath = string-join([forwarding-dir "/" file])
+    defmethod download-to-file (this, url:String, filename:String) -> False :
+      if debug-env-enabled?() :
+        val stanza-url = "http://lbstanza.org/resources/stanza/"
+        switch prefix?{url, _} :
+          stanza-url :
+            ;Retrieve the filename.
+            val file = url[length(stanza-url) to false]
 
-        ;Ensure the file exists.
-        if not file-exists?(fullpath) :
-          throw(Exception("Forwarded path %~ does not exist." % [fullpath]))
+            ;Get the forwarding path based on what file was requested.
+            val forwarding-dir = switch substring?{file, _} :
+              "stanzaenv" : get-var("INTERCEPT_STANZAENV_URL")
+              "stanza" : get-var("INTERCEPT_STANZA_URL")
+              else : fatal("Cannot intercept URL %~." % [url])
 
-        ;Perform the file copy.
-        copy-file(fullpath, filename)
+            ;Get the full path to forward to.
+            val fullpath = string-join([forwarding-dir "/" file])
+
+            ;Ensure the file exists.
+            if not file-exists?(fullpath) :
+              throw(Exception("Forwarded path %~ does not exist." % [fullpath]))
+
+            ;Perform the file copy.
+            copy-file(fullpath, filename)
+          else :
+            fatal("Cannot intercept URL %~." % [url])
       else :
-        fatal("Cannot intercept URL %~." % [url])
-  else :
-    stanzaenv/download/download-from-url(url, filename)
+        stanzaenv/download/download-from-url(url, filename)
 
-defmethod unzip-to-folder (s:StandardSystem, zipfile:String, folder:String) -> False :
-  stanzaenv/unzip/unzip-to-dir(zipfile, folder)
+    defmethod unzip-to-folder (this, zipfile:String, folder:String) -> False :
+      stanzaenv/unzip/unzip-to-dir(zipfile, folder)
 
-defmethod delete-recursive (s:StandardSystem, folder:String) -> False :
-  delete-recursive(folder, false)
+    defmethod delete-recursive (this, folder:String) -> False :
+      delete-recursive(folder, false)
 
-defmethod prompt-user (s:StandardSystem, prompt:String) -> String :
-  #if-defined(PLATFORM-WINDOWS) :
-    val prompter = core/line-prompter/LinePrompter(prompt, prompt)
-  #else :
-    val prompter = stz/line-noise-prompter/LineNoisePrompter(prompt, prompt)
-  match(get-line(prompter)) :
-    (str:String) : str
-    (f:False) : request-exit(0)
+    defmethod prompt-user (this, prompt:String) -> String :
+      match(prompter:MockPrompter) :
+        try :
+          /prompt(prompter, prompt)
+        catch (e) :
+          println(e)
+          request-exit(-1)
+      else :
+        #if-defined(PLATFORM-WINDOWS) :
+          val prompter = core/line-prompter/LinePrompter(prompt, prompt)
+        #else :
+          val prompter = stz/line-noise-prompter/LineNoisePrompter(prompt, prompt)
+        match(get-line(prompter)) :
+          (str:String) : str
+          (f:False) : request-exit(0)
 
-defmethod move-dir (s:StandardSystem, old-path:String, new-path:String) -> False :
-  val parsed = parse-path(new-path)
-  create-dir-recursive(to-string(enclosing-dir(parsed)))
-  rename-file(old-path, new-path)
+    defmethod move-dir (this, old-path:String, new-path:String) -> False :
+      val parsed = parse-path(new-path)
+      create-dir-recursive(to-string(enclosing-dir(parsed)))
+      rename-file(old-path, new-path)
 
-defmethod copy-file (s:StandardSystem, old-path:String, new-path:String) -> False :
-  copy-file(old-path, new-path)
+    defmethod copy-file (this, old-path:String, new-path:String) -> False :
+      copy-file(old-path, new-path)
 
-defmethod set-executable (s:StandardSystem, path:String) -> False :
-  chmod(path, 0o777)
+    defmethod set-executable (this, path:String) -> False :
+      chmod(path, 0o777)
 
-defmethod spit (s:StandardSystem, filename:String, snippet, append?:True|False) -> False :
-  spit(filename, snippet, append?)
+    defmethod spit (this, filename:String, snippet, append?:True|False) -> False :
+      spit(filename, snippet, append?)
 
-defmethod resolve-path (s:StandardSystem, path:String) -> String|False :
-  resolve-path(path)
+    defmethod resolve-path (this, path:String) -> String|False :
+      resolve-path(path)
 
-defmethod read-file (s:StandardSystem, path:String) -> ? :
-  read-file(path)
+    defmethod read-file (this, path:String) -> ? :
+      read-file(path)
 
-defmethod call-system (s:StandardSystem,
-                       file:String,
-                       args:Tuple<String>,
-                       workdir:String|False,
-                       env-vars:Tuple<KeyValue<String,String>>|False) ->
-                       [Int, String] :
-  val buffer = StringBuffer()
-  val proc = Process(file, args, STANDARD-IN, PROCESS-OUT, PROCESS-OUT, workdir, env-vars)
-  val proc-out = output-stream(proc)
-  let loop () :
-    val c = get-char(proc-out)
-    match(c:Char) :
-      add(buffer,c)
-      loop()
-  val code = match(wait(proc)) :
-    (s:ProcessDone) : value(s)
-    (s:ProcessTerminated|ProcessStopped) : -1
-  val output = to-string(buffer)
-  [code, output]
+    defmethod call-system (this,
+                           file:String,
+                           args:Tuple<String>,
+                           workdir:String|False,
+                           env-vars:Tuple<KeyValue<String,String>>|False) ->
+                           [Int, String] :
+      val buffer = StringBuffer()
+      val proc = Process(file, args, STANDARD-IN, PROCESS-OUT, PROCESS-OUT, workdir, env-vars)
+      val proc-out = output-stream(proc)
+      let loop () :
+        val c = get-char(proc-out)
+        match(c:Char) :
+          add(buffer,c)
+          loop()
+      val code = match(wait(proc)) :
+        (s:ProcessDone) : value(s)
+        (s:ProcessTerminated|ProcessStopped) : -1
+      val output = to-string(buffer)
+      [code, output]
 
-defmethod replace-current-process (s:StandardSystem,
-                                   file:String,
-                                   args:Tuple<String>) -> False :
-  replace-current-process(file, args)
+    defmethod replace-current-process (this,
+                                       file:String,
+                                       args:Tuple<String>) -> False :
+      replace-current-process(file, args)

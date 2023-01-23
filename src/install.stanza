@@ -71,6 +71,7 @@ defn request-install-dir (sys:System) -> EnvInstallation :
     if dir == "" :
       match(default-installation-dir(sys)) :
         (dir:String) :
+          println("Using the default directory.")
           Good(DefaultInstallation(dir))
         (f:False) :
           Bad("Could not determine default installation directory.")

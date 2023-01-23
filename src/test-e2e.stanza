@@ -24,8 +24,7 @@ deftest test-stanzaenv-contents :
     #ASSERT(file-exists?(fullpath))
     #ASSERT(file-type(fullpath) is RegularFileType)
 
-;deftest test-stanzaenv-install :
-let :
+defn try-fresh-install (prompts:String) :
   ;Reset scratch directory.
   delete-recursive("testscratch")
 
@@ -33,8 +32,12 @@ let :
   create-dir-recursive("testscratch")
 
   ;Here is the mock HOME directory.
-  create-dir-recursive("testscratch/patrick")  
+  create-dir-recursive("testscratch/patrick")
 
+  ;Here are questions to the prompts.
+  spit("testscratch/prompts.txt", prompts)
+
+  ;Run the installation command.
   val exe = "build/stanzaenv-osx"
   call-system(exe,
               [exe, "install"]
@@ -42,4 +45,31 @@ let :
               ["HOME" => resolve-path!("testscratch/patrick")
                "ENABLE_DEBUGENV" => ""
                "INTERCEPT_STANZA_URL" => "/Users/patricksli/Docs/Programming/stanzasite/resources/stanza"
-               "INTERCEPT_STANZAENV_URL" => resolve-path!("build/outputs")])
+               "INTERCEPT_STANZAENV_URL" => resolve-path!("build/outputs")
+               "INTERCEPT_PROMPTS" => "testscratch/prompts.txt"])
+
+;deftest test-stanzaenv-install :
+;let :
+;  val prompts = \<STR>
+;    "installed in" => ""
+;    "system PATH" => "No"
+;    "initial version of Stanza" => "0.17.4"
+;  <STR>
+;  try-fresh-install(prompts)
+
+;let :
+;  val prompts = \<STR>
+;    "installed in" => ""
+;    "system PATH" => "No"
+;    "initial version of Stanza" => "0.17.50"
+;  <STR>
+;  try-fresh-install(prompts)
+
+let :
+  val prompts = \<STR>
+    "installed in" => "testscratch/custom"
+    "system PATH" => "No"
+    "STANZAENV_DIR" => "Yes"
+    "initial version of Stanza" => "0.17.4"
+  <STR>
+  try-fresh-install(prompts)
