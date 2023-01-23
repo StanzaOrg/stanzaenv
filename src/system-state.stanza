@@ -99,9 +99,9 @@ defmethod print (o:OutputStream, s:DefaultInstallation) :
 defmethod print (o:OutputStream, s:SystemState) :
   defn one? (x) : [] when x is False else [x]
   val items = [
-    named-emptyable-list-fields("project-config", one?(project-config(s)))
     simple-field("installation", installation(s))
-    simple-field("global-config", one?(global-config(s)))
+    named-emptyable-list-fields("project-config", one?(project-config(s)))
+    named-emptyable-list-fields("global-config", one?(global-config(s)))
     path-status(s)
     named-list-fields("installed-versions", installed-versions(s))]
   print(o, "StanzaEnv SystemState%_" % [colon-field-list(items)])

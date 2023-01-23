@@ -17,10 +17,10 @@ public defn system-state (sys:System, installation:EnvInstallation) -> SystemSta
     ;Ensure that stanzaenv is installed.
     if installation is NoInstallation :
       throw(StanzaenvNotInstalled())
-    ;Read the project-specific version.
-    val project-version = read-project-stanza-version(sys)
-    ;Read the global version.
-    val global-version = read-global-stanza-version(sys, path(installation))
+    ;Read the project-specific configuration.
+    val project-config = read-project-config(sys)
+    ;Read the global configuration.
+    val global-config = read-global-config(sys, path(installation))
     ;Read the path status
     val path-status = read-path-status(sys, path(installation))
     ;Detect the installed versions.
@@ -28,8 +28,8 @@ public defn system-state (sys:System, installation:EnvInstallation) -> SystemSta
     ;Return the system state
     SystemState(
       installation,
-      project-version,      
-      global-version,
+      project-config,      
+      global-config,
       path-status,
       installed-versions)
 
@@ -41,14 +41,11 @@ public defn system-state (sys:System) -> SystemState :
 ;============================================================
 
 ;Read the project stanza version.
-defn read-project-stanza-version (sys:System) -> ProjectVersion|False :
+defn read-project-config (sys:System) -> ConfigFile|False :
   value? $ for path in all-parent-directories(sys, ".") first :
     val filepath = to-string(relative-to-dir(path, project-config-file()))
-    if file-exists?(sys, filepath) :
-      val file = read-config-file(sys,filepath)
-      One(ProjectVersion(filepath, version(file)))
-    else :
-      None()
+    if file-exists?(sys, filepath) : One(read-config-file(sys,filepath))
+    else : None()
 
 ;Retrieve all parent directories starting from 'start'.
 defn all-parent-directories (sys:System, start:String) -> Seq<ParsedPath> :
@@ -60,10 +57,9 @@ defn all-parent-directories (sys:System, start:String) -> Seq<ParsedPath> :
 ;============= Read the Global Stanza Version ===============
 ;============================================================
 
-defn read-global-stanza-version (sys:System, root:String) -> VersionSpecifier|False :
+defn read-global-config (sys:System, root:String) -> ConfigFile|False :
   if file-exists?(sys, global-config-file(root)) :
-    val file = read-config-file(sys, global-config-file(root))
-    version(file)  
+    read-config-file(sys, global-config-file(root))
 
 ;============================================================
 ;=================== Detect Installation ====================
