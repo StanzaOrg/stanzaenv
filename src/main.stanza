@@ -125,12 +125,47 @@ new-command $ Command(
       system-state(sys)))
 
 ;============================================================
+;====================== Classify Mode =======================
+;============================================================
+
+deftype LaunchMode 
+
+defstruct ShimMode <: LaunchMode :
+  program:String
+
+defstruct MainMode <: LaunchMode
+
+;Retrieve the launch mode for the program.
+defn launch-mode () -> LaunchMode :
+  val args = command-line-arguments()
+  if empty?(args) :
+    MainMode()
+  else :
+    val arg0 = args[0]
+    if suffix?(arg0, "stanza") :
+      ShimMode("stanza")
+    else :
+      MainMode()
+
+;============================================================
 ;======================== Launch ============================
 ;============================================================
 
-within with-requested-exit() :
-  simple-command-line-cli(
-    VERSION-MSG,
-    to-tuple(ENV-ACTIONS),
-    "help",
-    true)
+defn main () :
+  match(launch-mode()) :
+    (mode:ShimMode) :
+      stanzaenv/debugenv/initialize-debugenv()
+      val sys = StandardSystem()
+      stanzaenv/call-stanza/call-stanza(
+        sys,
+        to-tuple(command-line-arguments()),
+        system-state(sys))
+    (mode:MainMode) : 
+      within with-requested-exit() :
+        simple-command-line-cli(
+          VERSION-MSG,
+          to-tuple(ENV-ACTIONS),
+          "help",
+          true)
+
+main()
