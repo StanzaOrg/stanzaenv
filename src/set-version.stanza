@@ -13,7 +13,7 @@ public defn set-global-stanza-version (sys:System,
                                        version:VersionSpecifier,
                                        state:SystemState) -> False :
   within wrap-error(ConfigChangeError) :
-    val config = ConfigFile([VersionStmt(version)])
+    val config = ConfigFile([VersionStmt(resolve(sys, version))])
     spit(sys, global-config-file(install-path(state)), config, false)
     println("Active Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)
@@ -23,7 +23,7 @@ public defn set-project-stanza-version (sys:System,
                                         version:VersionSpecifier,
                                         state:SystemState) -> False :
   within wrap-error(ConfigChangeError) :
-    val config = ConfigFile([VersionStmt(version)])
+    val config = ConfigFile([VersionStmt(resolve(sys, version))])
     val path = match(project-version(state)) :
       (pv:ProjectVersion) : filename(pv)
       (f:False) : project-config-file()

@@ -89,7 +89,12 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
 ;============================================================
 
 defn print-states () :
-  println $ testing-state $ [
+  defn print-report (s:SystemState) :
+    println("=== System State ===\n")
+    println(status-report(s))
+    println("")
+    
+  print-report $ testing-state $ [
     0 ;installation
     0 ;project-version
     0 ;version-spec
@@ -99,7 +104,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     1 ;project-version
     0 ;version-spec
@@ -109,7 +114,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     0 ;version-spec
@@ -118,7 +123,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     2 ;version-spec
@@ -127,7 +132,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     3 ;version-spec
@@ -136,7 +141,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -145,7 +150,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -154,7 +159,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -163,7 +168,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -172,7 +177,7 @@ defn print-states () :
     2 ;version-spec
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -180,7 +185,7 @@ defn print-states () :
     0 ;installed-versions
   ]
 
-  println $ testing-state $ [
+  print-report $ testing-state $ [
     0 ;installation
     2 ;project-version
     4 ;version-spec
@@ -684,12 +689,13 @@ defn try-call-stanza () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-println("try-install-0")
-try-install-0()
-println("try-install-1")
-try-install-1()
-println("try-install-2")
-try-install-2()
+print-states()
+;println("try-install-0")
+;try-install-0()
+;println("try-install-1")
+;try-install-1()
+;println("try-install-2")
+;try-install-2()
 ;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()

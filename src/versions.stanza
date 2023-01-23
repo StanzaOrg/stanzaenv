@@ -48,6 +48,18 @@ defmethod write (o:OutputStream, v:NamedVersion) :
   print(o, "\"%_\"" % [v])
 
 ;============================================================
+;======================== Resolution ========================
+;============================================================
+
+;For local versions, resolve them to an absolute path.
+public defn resolve (sys:System, v:VersionSpecifier) -> VersionSpecifier :
+  match(v:LocalVersion) :
+    val fullpath = resolve-path!(sys, path(v))
+    LocalVersion(fullpath)
+  else :
+    v
+
+;============================================================
 ;======================= Parsing ============================
 ;============================================================
 

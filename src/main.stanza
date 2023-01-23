@@ -66,6 +66,21 @@ new-command $ Command(
 )
 
 ;============================================================
+;======================= Status Command =====================
+;============================================================
+
+new-command $ Command(
+  "status"
+  ZeroArg, false,
+  [],
+  "Displays the status of the Stanza environment."
+  false
+  fn (cmd-args) :
+    val [sys, state] = initialize-system()
+    println("\n%_\n" % [status-report(state)])
+)
+
+;============================================================
 ;================= Install Stanza Command ===================
 ;============================================================
 

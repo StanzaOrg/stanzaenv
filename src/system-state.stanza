@@ -3,6 +3,7 @@ defpackage stanzaenv/system-state :
   import collections
   import stz/printing-utils
   import stanzaenv/versions
+  import line-wrap
 
 ;============================================================
 ;==================== State Representation ==================
@@ -112,3 +113,109 @@ defmethod print (o:OutputStream, s:SystemState) :
     path-status(s)
     named-list-fields("installed-versions", installed-versions(s))]
   print(o, "StanzaEnv SystemState%_" % [colon-field-list(items)])
+
+;============================================================
+;===================== Report ===============================
+;============================================================
+
+;Installation Type:
+;
+;  Type: Default installation to $HOME
+;  Location: /usr/patricks/.stanzaenv
+;
+;Project-Specific Stanza Version:
+;
+;  No project-specific version set.
+;
+;Global Stanza Version:
+;
+;  0.17.54
+;
+;  Local Directory: /Applications/stanza
+;
+;Paths in system PATH:
+;
+;  /usr/patricksli/.stanzaenv (*)
+;  /usr/patrickli
+;  /Applications/sdf
+;
+;  (*) This is the Stanzaenv binary directory.
+;
+;  WARNING: The Stanzaenv binary directory has not been detected on
+;  the system PATH.
+;
+;Installed Stanza Versions:
+;
+;  0.17.54
+;  0.17.53
+;  0.16.50
+;
+;  No Stanza versions installed.
+
+public defn status-report (state:SystemState) :
+  within o = printable() :
+    print(o, "Installation Type:\n\n")
+    print(o, Indented(format(installation(state))))
+    print(o, "\n\nProject-Specific Stanza Version:\n\n")
+    print(o, Indented(format(project-version(state))))
+    print(o, "\n\nGlobal Stanza Version:\n\n")
+    print(o, Indented(format-global-version(global-version(state))))
+    print(o, "\n\nInstalled Stanza Versions:\n\n")
+    print(o, Indented(format(installed-versions(state))))
+    print(o, "\n\nSystem PATH:\n\n")
+    print(o, Indented(format(path-status(state))))
+
+defn format (install:EnvInstallation) :
+  within o = printable() :
+    match(install) :
+      (install:DefaultInstallation) :
+        print(o, "Type: Default installation to $HOME.")
+      (install:ConfigInstallation) :
+        print(o, "Type: Custom installation to $STANZAENV_DIR.")
+    lnprint(o, "Location: %_" % [path(install)])
+
+defn format (pv:ProjectVersion|False) :
+  within o = printable() :
+    match(pv) :
+      (pv:ProjectVersion) :
+        print(o, format(version(pv)))
+        lnprint(o, "Configuration File: %_" % [filename(pv)])
+      (pv:False) :
+        print(o, "No project-specific Stanza version set.")
+
+defn format-global-version (v:VersionSpecifier|False) :
+  match(v) :
+    (v:False) : "No global Stanza version set."
+    (v:VersionSpecifier) : format(v)
+
+defn format (v:VersionSpecifier) :
+  match(v) :
+    (v:NamedVersion) : v
+    (v:LocalVersion) : "Local Directory: %_" % [path(v)]
+    (v:SystemVersion) : "System Stanza"
+
+defn format (ps:PathStatus) :
+  within o = printable() :
+    if empty?(path(ps)) :
+      println(o, "PATH is empty.")
+      lnprint(o, LineWrapped("WARNING: The Stanzaenv bin directory has not been detected on the system PATH."))
+    else :
+      for (s in path(ps), i in 0 to false) do :
+        if i == stanzaenv-index(ps) : println(o, "%_ (*)" % [s])
+        else : println(o, s)
+      if stanzaenv-index(ps) is Int :
+        lnprint(o, "(*) This is the Stanzaenv bin directory.")
+      else :
+        lnprint(o, LineWrapped("WARNING: The Stanzaenv bin directory has not been detected on the system PATH."))
+
+defn format (vs:Tuple<InstalledStanza>) :
+  if empty?(vs) :
+    "No Stanza versions installed."
+  else :
+    "%n" % [seq(version, vs)]
+
+;Helper: Create a Printable.
+defn printable (body:OutputStream -> ?) -> Printable :
+  new Printable :
+    defmethod print (o:OutputStream, this) :
+      body(o)
