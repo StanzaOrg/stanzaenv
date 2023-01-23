@@ -109,12 +109,33 @@ new-command $ Command(
 ;===================== Set Version ==========================
 ;============================================================
 
+val SET-VERSION-HELP = trim $ \<STR>
+
+This command sets the global Stanza version by writing to the global
+Stanzaenv configuration file.
+
+EXAMPLES:
+
+Setting to a numbered Stanza version:
+
+  stanzaenv set-version 0.17.50
+
+Setting to a system Stanza version:
+
+  stanzaenv set-version system
+
+Setting to a Stanza version in a local directory:
+
+  stanzaenv set-version local /my/local/stanzadir
+
+<STR>
+
 new-command $ Command(
   "set-version"
   AtLeastOneArg, "the Stanza version to set for the system."
   [],
   "Set the global Stanza version."
-  false,
+  SET-VERSION-HELP,
   fn (cmd-args) :
     val v = parse-version(args(cmd-args))
     if v is False :
@@ -129,12 +150,33 @@ new-command $ Command(
 ;===================== Set Project Version ==================
 ;============================================================
 
+val SET-PROJECT-VERSION-HELP = trim $ \<STR>
+
+This command sets the project-specific Stanza version by writing a new
+'.stanza-version' configuration file to the current directory.
+
+EXAMPLES:
+
+Setting to a numbered Stanza version:
+
+  stanzaenv set-project-version 0.17.50
+
+Setting to a system Stanza version:
+
+  stanzaenv set-project-version system
+
+Setting to a Stanza version in a local directory:
+
+  stanzaenv set-project-version local /my/local/stanzadir
+
+<STR>
+
 new-command $ Command(
   "set-project-version"
   AtLeastOneArg, "the Stanza version to set for the project."
   [],
   "Set the project Stanza version."
-  false,
+  SET-PROJECT-VERSION-HELP,
   fn (cmd-args) :
     val v = parse-version(args(cmd-args))
     if v is False :

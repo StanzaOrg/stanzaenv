@@ -1,7 +1,8 @@
 defpackage stanzaenv/versions :
   import core
   import collections
-  import stanzaenv/system-state
+  import stanzaenv/system-api
+  import stanzaenv/system-utils
 
 ;============================================================
 ;===================== Representation =======================
