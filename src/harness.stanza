@@ -15,6 +15,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/filetree
   import stanzaenv/call-stanza
   import stanzaenv/mock-prompter
+  import stanzaenv/paths
   import stz/printing-utils
 
 ;============================================================
@@ -308,6 +309,10 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         falseable-field("workdir", workdir)
         simple-field("env-vars", env-vars)]
       println("MockSystem: call-system%_" % [colon-field-list(items)])
+      val fullpath = match(workdir:String) : relative-to(workdir, file)
+                     else : file
+      if not exists?(filetree, fullpath) :
+        throw(Exception("Call-system failed. No such file: %~" % [fullpath]))
       [0, ""]
 
     defmethod replace-current-process (this, 
@@ -364,6 +369,30 @@ defn try-install-1 () :
     
     ;prompts
     ["installed in" => "/Applications/stanzaenv"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => "0.17.52"]
+
+    ;platform
+    OS-X)
+    
+  install-stanzaenv(sys)
+
+;Tries to install Stanza at the end.
+defn try-install-2 () :
+  val sys = MockSystem(
+    ;env vars
+    ["SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications/"]
+    
+    ;working directory
+    "/users"
+    
+    ;prompts
+    ["installed in" => "tempinstall"
      "system PATH" => "yes"
      "STANZAENV_DIR" => "yes"
      "initial version of Stanza" => "0.17.52"]
@@ -655,7 +684,12 @@ defn try-call-stanza () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
+println("try-install-0")
+try-install-0()
+println("try-install-1")
 try-install-1()
+println("try-install-2")
+try-install-2()
 ;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()

@@ -33,10 +33,10 @@ defn run-install-command (sys:System, stanza-dir:String) -> False :
     Linux : "linux"
     Windows : "windows"
   val [ret, output] = call-system(
-                     sys
-                     stanza-exe
-                     [stanza-exe "install" "-platform" platform-str "-path" "."]
-                     stanza-dir
-                     false)
+                        sys
+                        "./stanza"
+                        ["./stanza" "install" "-platform" platform-str "-path" "."]
+                        stanza-dir
+                        false)
   if ret != 0 :
     throw(InstallationCommandFailed(output))
