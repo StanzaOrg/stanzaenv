@@ -43,6 +43,7 @@ defn try-fresh-install (prompts:String) :
               [exe, "install"]
               false,
               ["HOME" => resolve-path!("testscratch/patrick")
+               "SHELL" => "/bin/zsh"
                "ENABLE_DEBUGENV" => ""
                "INTERCEPT_STANZA_URL" => "/Users/patricksli/Docs/Programming/stanzasite/resources/stanza"
                "INTERCEPT_STANZAENV_URL" => resolve-path!("build/outputs")
@@ -68,7 +69,7 @@ defn try-fresh-install (prompts:String) :
 let :
   val prompts = \<STR>
     "installed in" => "testscratch/custom"
-    "system PATH" => "No"
+    "system PATH" => "Yes"
     "STANZAENV_DIR" => "Yes"
     "initial version of Stanza" => "0.17.4"
   <STR>
