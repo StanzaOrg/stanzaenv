@@ -12,8 +12,13 @@ defpackage stanzaenv/config :
 
 ;Represents the config file.
 public defstruct ConfigFile :
-  location:ParsedPath
+  location:ParsedPath with: (ensure => absolute!)
   stmts:Tuple<ConfigStmt> with: (updater => sub-stmts)
+
+;Ensure: Absolute path
+defn absolute! (description:String, path:ParsedPath) :
+  if not absolute?(path) :
+    fatal("Path '%_' given to %_ is not absolute." % [path, description])
 
 ;Represents a line in the config file.
 public deftype ConfigStmt
@@ -65,24 +70,6 @@ public defn validate (stmts:Tuple<ConfigStmt>, location:String) -> False :
     throw(ConfigFileError(location, "Multiple proj-files statements in config file."))
 
 ;============================================================
-;==================== Resolve Relative ======================
-;============================================================
-
-;Extension statements contain a path that is relative to the
-;location of the config file itself, resolve it here.
-public defn resolve-relative (stmts:Tuple<ConfigStmt>, location:ParsedPath) -> Tuple<ConfigStmt> :
-  ;Helpers: Make relative to given location.
-  defn relative-to-loc (p:ParsedPath) : relative-to-dir(location, p)
-  defn relative-to-loc (ps:Tuple<ParsedPath>) : map(relative-to-loc, ps)
-  
-  for stmt in stmts map :
-    match(stmt) :
-      (stmt:ExtensionStmt) : ExtensionStmt(relative-to-loc(path(stmt)))
-      (stmt:PkgDirsStmt) : PkgDirsStmt(relative-to-loc(paths(stmt)))
-      (stmt:ProjFilesStmt) : ProjFilesStmt(relative-to-loc(paths(stmt)))
-      (stmt) : stmt
-
-;============================================================
 ;======================= Accessors ==========================
 ;============================================================
 
@@ -102,6 +89,36 @@ public defn sub-version (f:ConfigFile, v:VersionSpecifier) -> ConfigFile :
     match(stmt:VersionStmt) : VersionStmt(v)
     else : stmt
   sub-stmts(f, new-stmts)
+
+;============================================================
+;======================= Signature ==========================
+;============================================================
+
+;Retrieve the signature of a config file.
+public defn signature (c:ConfigFile) -> String :
+  string-signature(string-join([location(c) "," c]))
+
+;Compute the hash signature of a given string.
+defn string-signature (s:String) -> String :
+  val bytes = to-byte-array(s)
+  val hash = core/sha256/sha256-hash(bytes)
+  string-join(seq(to-hex-chars, hash))
+
+;Store the string in a ByteArray.
+defn to-byte-array (s:String) -> ByteArray :
+  val a = ByteArray(length(s))
+  for (c in s, i in 0 to false) do :
+    a[i] = to-byte(c)
+  a
+
+;Characters used in a hex representation.
+val HEX-CHARS = "0123456789ABCDEF"
+
+;Convert a byte to the hex representation.
+defn to-hex-chars (a:Byte) -> String :
+  val c1 = HEX-CHARS[to-int(a) & 0xF]
+  val c2 = HEX-CHARS[to-int(a) >> 4]
+  String([c1, c2])
 
 ;============================================================
 ;===================== Printers =============================

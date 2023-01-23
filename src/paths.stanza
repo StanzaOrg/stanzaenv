@@ -40,6 +40,14 @@ public defn shim-paths (root:String) -> Tuple<String> :
 public defn stanza-version-dir (root:String) -> String :
   relative-to(root, "stanza")
 
+;Return the directory where all the .stanza config files are stored.
+public defn stanza-config-dir (root:String) -> String :
+  relative-to(root, "configs")
+
+;Return the directory where a specific .stanza config file is stored.
+public defn stanza-config-dir (root:String, signature:String) -> String :
+  relative-to(stanza-config-dir(root), signature)
+
 ;Return the path to the stanza executable given the Stanza
 ;installation directory.
 public defn stanza-exe-path (stanza-root:String) -> String :

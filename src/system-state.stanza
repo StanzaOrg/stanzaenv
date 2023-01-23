@@ -63,10 +63,20 @@ public defn installed? (state:SystemState, v:NamedVersion) -> True|False :
     version(installed) == v
 
 ;Returns the active Stanza version in effect.
-;public defn active-version (state:SystemState) -> VersionSpecifier|False :
-;  match(project-version(state)) :
-;    (v:ProjectVersion) : version(v)
-;    (f:False) : global-version(state)
+public defn active-version (state:SystemState) -> VersionSpecifier|False :
+  label<VersionSpecifier|False> return :
+    match(project-config(state)) :
+      (c:ConfigFile) : return(version(c))
+      (f:False) : false
+    match(global-config(state)) :
+      (c:ConfigFile) : return(version(c))
+      (f:False) : false
+
+;Throw an exception if no version is in effect.
+public defn active-version! (state:SystemState) -> VersionSpecifier :
+  val v = active-version(state)
+  throw(NoActiveVersionSpecified()) when v is False
+  v as VersionSpecifier
 
 ;============================================================
 ;===================== Printers =============================

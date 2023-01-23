@@ -7,6 +7,7 @@ defpackage stanzaenv/call-stanza :
   import stanzaenv/paths
   import stanzaenv/system-path
   import stanzaenv/errors
+  import stanzaenv/gen-dotstanza
   
 public defn call-stanza (sys:System,
                          args:Tuple<String>,
@@ -23,8 +24,14 @@ public defn call-stanza (sys:System,
     val stanza-exe = stanza-exe-path(stanza-dir)
     if not file-exists?(sys,stanza-exe) :
       throw(MissingStanzaExe(stanza-dir))
+    ;Ensure that the DotStanza configuration file exists.
+    val config-dir = generate-dotstanza-config(
+                       sys,
+                       install-path(sys),
+                       stanza-dir,
+                       active-config(system-state) as ConfigFile)
     ;Launch Stanza with the appropriate STANZA_CONFIG.
-    launch-stanza-exe(sys, stanza-exe, stanza-dir, args)
+    launch-stanza-exe(sys, stanza-exe, config-dir, args)
   
 ;Ensure that the active Stanza version is installed.
 defn ensure-active-version-installed (state:SystemState) -> VersionSpecifier :
@@ -60,11 +67,11 @@ defn launch-system-stanza (sys:System,
 ;Launch the Stanza executable
 defn launch-stanza-exe (sys:System,
                         stanza-exe:String,
-                        stanza-dir:String,
+                        config-dir:String,
                         args:Tuple<String>) -> False :
   val new-args = to-tuple $
     for (x in args, i in 0 to false) seq :
       if i == 0 : stanza-exe
       else : x
-  set-env(sys, "STANZA_CONFIG", stanza-dir)
+  set-env(sys, "STANZA_CONFIG", config-dir)
   replace-current-process(sys, stanza-exe, new-args)

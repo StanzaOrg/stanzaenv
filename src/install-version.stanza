@@ -7,6 +7,7 @@ defpackage stanzaenv/install-version :
   import stanzaenv/paths
   import stanzaenv/urls
   import stanzaenv/errors
+  import stanzaenv/config
 
 ;Download the given Stanza version.
 ;Assumes that it's not already installed.
@@ -24,19 +25,5 @@ public defn install-stanza-version (sys:System,
       set-executable(sys, stanza-exe-path(stanza-dir))
       run-install-command(sys, stanza-dir)
       println("Successfully installed Stanza %_." % [v])
+  
 
-;Run the "stanza install" command.
-defn run-install-command (sys:System, stanza-dir:String) -> False :
-  val stanza-exe = stanza-exe-path(stanza-dir)
-  val platform-str = switch(current-platform(sys)) :
-    OS-X : "os-x"
-    Linux : "linux"
-    Windows : "windows"
-  val [ret, output] = call-system(
-                        sys
-                        "./stanza"
-                        ["./stanza" "install" "-platform" platform-str "-path" "."]
-                        stanza-dir
-                        false)
-  if ret != 0 :
-    throw(InstallationCommandFailed(output))

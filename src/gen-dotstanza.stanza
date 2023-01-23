@@ -1,0 +1,71 @@
+defpackage stanzaenv/gen-dotstanza :
+  import core
+  import collections
+  import core/parsed-path
+  import stanzaenv/versions
+  import stanzaenv/system-api
+  import stanzaenv/system-utils
+  import stanzaenv/paths
+  import stanzaenv/config
+  import stanzaenv/errors
+
+;Ensure that a .stanza file for the given configuration
+;has been generated.
+public defn generate-dotstanza-config (sys:System,
+                                       root:String,
+                                       stanza-dir:String,
+                                       config:ConfigFile) -> String :
+  ;Get the directory where it should be.
+  val path = stanza-config-dir(root, signature(config))
+  
+  ;If it doesn't already exist, then generate it.
+  if not file-exists?(sys, path) :
+    within temp = make-temp-dir(sys, stanzaenv-temp-dir(root)) :
+      run-install-command(sys, stanza-dir, path)
+      attach-data(sys, path, config)
+      move-dir(sys, temp, path)
+      
+  ;Return the folder where it is generated.
+  path
+
+;Run the "stanza install" command.
+defn run-install-command (sys:System,
+                          stanza-dir:String,
+                          config-dir:String) -> False :
+  val stanza-exe = stanza-exe-path(stanza-dir)
+  val platform-str = switch(current-platform(sys)) :
+    OS-X : "os-x"
+    Linux : "linux"
+    Windows : "windows"
+  val [ret, output] = call-system(
+                        sys
+                        "./stanza"
+                        ["./stanza" "install" "-platform" platform-str "-path" config-dir]
+                        stanza-dir
+                        false)
+  if ret != 0 :
+    throw(InstallationCommandFailed(output))
+
+;Attach the other data in the config: proj-files, pkg-dirs.
+defn attach-data (sys:System, config-dir:String, config:ConfigFile) :
+  ;Retrieve the additional data as a Printable.
+  val data = new Printable :
+    defmethod print (o:OutputStream, this) :
+      print(o, "\n")
+      for stmt in stmts(config) do :
+        match(stmt) :
+          (stmt:PkgDirsStmt) :
+            val path-strings = for path in paths(stmt) seq :
+              val str = to-string(relative-to-dir(location(config), path))
+              Indented("\n" % [str])
+            print(o, "pkg-dirs = (%*)" % [path-strings])
+          (stmt:ProjFilesStmt) :
+            val path-strings = for path in paths(stmt) seq :
+              val str = to-string(relative-to-dir(location(config), path))
+              Indented("\n%~" % [str])
+            print(o, "proj-files = (%*)" % [path-strings])
+          (stmt) :
+            false
+  ;Print it out to the config file.
+  val filename = relative-to(config-dir, ".stanza")
+  spit(sys, filename, data, true)

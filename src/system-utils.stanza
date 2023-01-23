@@ -44,7 +44,8 @@ public defn make-temp-dirs<?T> (body:TempDirs -> ?T, sys:System, dir:String) -> 
   ;Delete all temporary directories.
   defn delete-all-temp-dirs () -> False :
     for dir in created-dirs do :
-      delete-recursive(sys, dir)
+      if file-exists?(sys, dir) :
+        delete-recursive(sys, dir)
 
   ;Launch!
   try :

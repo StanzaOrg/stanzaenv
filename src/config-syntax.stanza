@@ -12,11 +12,10 @@ defpackage stanzaenv/config-syntax :
 ;============================================================
 
 ;Parse a stanzaenv config file.
-public defn parse-config-file (forms:List, location:String) -> ConfigFile :
-  val path = parse-path(location)
+public defn parse-config-file (forms:List, path:ParsedPath) -> ConfigFile :
   val stmts = to-tuple(parse-syntax[stanzaenv-syntax / #stmt! ...](forms))
   validate(stmts, location)
-  ConfigFile(path, resolve-relative(stmts, path))
+  ConfigFile(path, stmts)
 
 ;Read a stanzaenv config file.
 public defn read-config-file (sys:System, file:String) -> ConfigFile :

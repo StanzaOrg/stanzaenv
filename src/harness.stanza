@@ -732,7 +732,7 @@ defn try-call-stanza () :
 
 within (package,sig) = set-stack-trace-filter() :
   package != `core
-;print-states()
+print-states()
 ;println("try-install-0")
 ;try-install-0()
 ;println("try-install-1")
