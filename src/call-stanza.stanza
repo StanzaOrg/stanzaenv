@@ -12,9 +12,9 @@ public defn call-stanza (sys:System,
                          system-state:SystemState) -> False :
   ;Ensure that the version is properly installed.
   val version = ensure-active-version-installed(system-state)
-  ;If it's the system version then just call it.
+  ;If it's the system version.
   if version is SystemVersion :
-    fatal("Call system version")
+    launch-system-stanza(sys, args, system-state)
   else :
     ;Retrieve the path to the Stanza executable.
     val stanza-dir = stanza-path(system-state, version)
@@ -42,6 +42,21 @@ defn stanza-path (state:SystemState, v:VersionSpecifier) -> String :
   match(v) :
     (v:NamedVersion) : stanza-version-path(install-path(state), v)
     (v:LocalVersion) : path(v)
+
+;Launch the System Stanza version.
+;It does this by removing the 'stanzaenv' folder from the PATH variable.
+defn launch-system-stanza (sys:System,
+                           args:Tuple<String>,
+                           state:SystemState) -> False :
+  ;Gather the PATH elements that do not correspond to stanzaenv folder.
+  val path-parts =
+    for (item in path(path-status(state)), i in 0 to false) filter :
+      i != stanzaenv-index(path-status(state))
+  ;Form the new path.
+  val new-path = string-join(path-parts, ":")
+  ;Set the new path, and then call stanza.
+  set-env(sys, "PATH", new-path)
+  replace-current-process(sys, args[0], args)
 
 ;Launch the Stanza executable
 defn launch-stanza-exe (sys:System,

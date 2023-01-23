@@ -114,12 +114,15 @@ defn read-path-status (sys:System, root:String) -> PathStatus :
 
 defn detect-installed-versions (sys:System, root:String) -> Tuple<InstalledStanza> :
   val dir = stanza-version-dir(root)
-  to-tuple $ for file in list-dir(sys, dir) seq? :
-    if directory?(sys, relative-to(dir,file)) :
-      match(parse-version-from-folder(file)) :
-        (v:NamedVersion) : One(InstalledStanza(v))
-        (f:False) : None()
-    else : None()
+  if file-exists?(sys, dir) :
+    to-tuple $ for file in list-dir(sys, dir) seq? :
+      if directory?(sys, relative-to(dir,file)) :
+        match(parse-version-from-folder(file)) :
+          (v:NamedVersion) : One(InstalledStanza(v))
+          (f:False) : None()
+      else : None()
+  else :
+    []
 
 defn parse-version-from-folder (folder:String) -> NamedVersion|False :
   if prefix?(folder, "v") : parse-named-version(folder[1 to false])

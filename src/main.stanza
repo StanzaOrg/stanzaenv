@@ -2,6 +2,7 @@ defpackage stanzaenv/main :
   import core
   import collections
   import arg-parser
+  import stanzaenv/system-api
   import stanzaenv/standard-system
   import stanzaenv/system-state
   import stanzaenv/read-state
@@ -176,11 +177,15 @@ defn launch-mode () -> LaunchMode :
 defn main () :
   match(launch-mode()) :
     (mode:ShimMode) :
-      val [sys, state] = initialize-system()
-      stanzaenv/call-stanza/call-stanza(
-        sys,
-        to-tuple(command-line-arguments()),
-        state)
+      try :
+        val [sys, state] = initialize-system()
+        stanzaenv/call-stanza/call-stanza(
+          sys,
+          to-tuple(command-line-arguments()),
+          state)
+      catch (e) :
+        println(e)
+        exit(-1)
     (mode:MainMode) : 
       within with-requested-exit() :
         simple-command-line-cli(

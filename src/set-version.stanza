@@ -31,6 +31,17 @@ public defn set-project-stanza-version (sys:System,
     println("Project Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)
 
+;Clears the currently-set Project version.
+public defn clear-project-stanza-version (sys:System,
+                                          state:SystemState) -> False :
+  within wrap-error(ConfigChangeError) :
+    match(project-version(state)) :
+      (pv:ProjectVersion) :
+        delete-recursive(sys, filename(pv))
+        println("Deleted project-specific Stanza settings at '%_'." % [filename(pv)])        
+      (f:False) :
+        println("This directory does not make use of a project-specific Stanza version.")
+
 ;Check the validity of the new Stanza version, and
 ;print warnings.
 defn check-new-version (sys:System,
