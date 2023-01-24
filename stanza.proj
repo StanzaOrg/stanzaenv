@@ -6,17 +6,16 @@ package stanzaenv/windows-registry requires :
   dynamic-library: "windows-registry.dll"
 
 package curl requires :
-  dynamic-library: "libcurlbindings.dylib"
-  ccflags: 
-    "-L{.}/bin/dylibs"
-    "-lcurlbindings"
-    "-lcurl"
+  dynamic-library: "libcurlbindings.dylib"  
+  foreign-packages(conan) :
+    "libcurl/7.86.0"
+    "openssl/1.1.1s"
+  ccfiles: "src/lib-curl/curl.c"
     
 package zip requires :
   dynamic-library: "libzip.5.5.dylib"
-  ccflags:
-    "-L{.}/bin/dylibs"
-    "-lzip.5.5"
+  foreign-packages(conan) :
+    "libzip/1.8.0"
 
 package stanzaenv/sysutils requires :
   dynamic-library: "libsysutils.dylib"
@@ -32,3 +31,5 @@ build stanzaenv-osx :
   o: "build/stanzaenv-osx"
   s: "build/stanzaenv-osx.s"
   pkg: "build/pkgs"
+
+foreign-package-params(conan) : ()
