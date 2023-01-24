@@ -187,6 +187,14 @@ public defstruct DebugVarErrors <: StanzaEnvError :
 defmethod print (o:OutputStream, e:DebugVarErrors) :
   print(o, "The debugging environment could not be initialized%_" % [colon-field-list(errors(e))])
 
+;Occurs when user attempts to call an extension with a given name,
+;and there is no such extension.
+public defstruct NoExtension <: StanzaEnvError :
+  name:String
+
+defmethod print (o:OutputStream, e:NoExtension) :
+  print(o, "There is no extended Stanza version called %~ in the current project." % [name(e)])
+
 ;Helper utility for wrapping a body and wrapping up any thrown exception.
 public defn wrap-error<?T> (body:() -> ?T, Error:Exception -> Exception) -> T :
   try : body()

@@ -51,7 +51,7 @@ defsyntax stanzaenv-syntax :
     val last-entry = entries(path)[n - 1]
     if last-entry is-not NamedPath :
       throw(ConfigSyntaxError(closest-info(), "Invalid path to extension executable for Stanza."))
-    ExtensionStmt(path)
+    ExtensionStmt(name(last-entry as NamedPath), path)
 
   defrule stmt = (pkg-dirs: (?paths:#path! ...)) :
     PkgDirsStmt(to-tuple(paths))
