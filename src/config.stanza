@@ -92,6 +92,10 @@ public defn extension-path (f:ConfigFile, name:String) -> String|False :
   match(stmt:ExtensionStmt) :
     to-string(relative-to-dir(location(f), path(stmt)))
 
+;Retrieve all the extension names in the config file.
+public defn all-extension-names (f:ConfigFile) -> Tuple<String> :
+  to-tuple(seq(name, filter-by<ExtensionStmt>(stmts(f))))    
+
 ;Return a new configuration file with a different version specifier.
 public defn sub-version (f:ConfigFile, v:VersionSpecifier) -> ConfigFile :
   val new-stmts = for stmt in stmts(f) map :
