@@ -15,14 +15,14 @@ public defn install-stanza-version (sys:System,
                                     v:NamedVersion,
                                     root:String) -> False :
   within wrap-error(StanzaInstallationError) :
-    within temp = make-temp-dir(sys, stanzaenv-temp-dir(root)) :
+    within temp = make-temp-dir(sys, path(TempFolder(), root)) :
+      val temp-stanza = relative-to(temp, "stanza")
       val url = stanza-zipfile-url(current-platform(sys), v)
       val zip-path = relative-to(temp, "stanza.zip")
       download-to-file(sys, url, zip-path)
-      unzip-to-folder(sys, zip-path, relative-to(temp, "stanza"))
-      val stanza-dir = stanza-version-path(root, v)
-      move-dir(sys, relative-to(temp, "stanza"), stanza-dir)
-      set-executable(sys, stanza-exe-path(stanza-dir))
+      unzip-to-folder(sys, zip-path, temp-stanza)
+      move-dir(sys, temp-stanza, path(StanzaFolder(v), root))
+      set-executable(sys, path(StanzaExe(v), root))
       println("Successfully installed Stanza %_." % [v])
   
 

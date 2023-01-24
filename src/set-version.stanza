@@ -17,7 +17,8 @@ public defn set-global-stanza-version (sys:System,
       (old-config:ConfigFile) :
         sub-version(old-config, resolve(sys,version))
       (f:False) :
-        ConfigFile(global-config-file(install-path(state)), resolve(sys, version))
+        val global-config = path(StanzaenvConfig(), install-path(state))
+        ConfigFile(global-config, resolve(sys, version))
     spit(sys, to-string(location(config)), config, false)
     println("Active Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)
@@ -59,7 +60,7 @@ defn check-new-version (sys:System,
         println("Warning: This Stanza version has not yet been installed. Please \
                  install it before using.")
     (version:LocalVersion) :
-      val fullpath = stanza-exe-path(path(version))
+      val fullpath = relative-to(path(version), stanza-exe(current-platform(sys)))
       if not file-exists?(sys, fullpath) :
         println("Warning: There was no 'stanza' executable found at location '%_'." % [fullpath])
     (version:SystemVersion) :

@@ -24,12 +24,21 @@ public defn default-bin-files (sys:System) -> Tuple<String> :
   for item in [StanzaenvExe(), ShimExe("stanza")] map :
     exe-name(item, current-platform(sys))
 
+;Returns the name of the stanza executable found in
+;a standard Stanza distribution.
+public defn stanza-exe (platform:Platform) -> String :
+  val exe-extension = switch(platform) :
+    Windows : ".exe"
+    else : ""
+  to-string("stanza%_" % [exe-extension])
+
 ;============================================================
 ;==================== Directory Structure ===================
 ;============================================================
 
 ;Listing of all items in the Stanzaenv folder.
 public deftype StanzaenvDirItem
+public deftype StanzaenvExeItem <: StanzaenvDirItem
 public defstruct BinFolder <: StanzaenvDirItem
 public defstruct ConfigsFolder <: StanzaenvDirItem
 public defstruct RootFolder <: StanzaenvDirItem
@@ -37,13 +46,19 @@ public defstruct StanzasFolder <: StanzaenvDirItem
 public defstruct TempFolder <: StanzaenvDirItem
 public defstruct ConfigFolder <: StanzaenvDirItem : (signature:String)
 public defstruct StanzaFolder <: StanzaenvDirItem : (version:NamedVersion)
-public defstruct StanzaenvExe <: StanzaenvDirItem
-public defstruct ShimExe <: StanzaenvDirItem : (name:String)
+public defstruct StanzaenvExe <: StanzaenvExeItem
+public defstruct StanzaExe <: StanzaenvExeItem : (version:NamedVersion)
+public defstruct ShimExe <: StanzaenvExeItem : (name:String)
 public defstruct StanzaenvConfig <: StanzaenvDirItem
 public defstruct DotStanza <: StanzaenvDirItem : (signature:String)
 
 ;Return the relative path of this item to the stanzaenv root.
 public defn path (item:StanzaenvDirItem, platform:Platform|False) -> String :
+  ;Helper: Force retrieve the platform.
+  defn platform! () -> Platform :
+    match(platform:Platform) : platform
+    else : fatal("Platform is necessary to compute path to %_." % [item])
+    
   match(item) :
     (item:BinFolder) :
       "bin"
@@ -62,8 +77,11 @@ public defn path (item:StanzaenvDirItem, platform:Platform|False) -> String :
     (item:StanzaFolder) :
       val [a b c] = value(version(item))
       to-string("stanza/v%_.%_.%_" % [a, b, c])
+    (item:StanzaExe) :
+      val [a b c] = value(version(item))
+      to-string("stanza/v%_.%_.%_/%_" % [a, b, c, stanza-exe(platform!())])      
     (item:ShimExe|StanzaenvExe) :
-      to-string("bin/%_" % [exe-name(item, platform as Platform)])
+      to-string("bin/%_" % [exe-name(item, platform!())])
     (item:StanzaenvConfig) :
       "stanzaenv.config"
 

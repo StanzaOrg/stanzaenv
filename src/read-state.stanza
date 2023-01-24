@@ -90,7 +90,7 @@ public defn detect-installation (sys:System) -> EnvInstallation :
 
 ;Returns true if the given root is a valid installation.
 defn valid-installation? (sys:System, root:String) -> True|False :
-  val path = path(StanzaenvExe(), root)
+  val path = path(StanzaenvExe(), current-platform(sys), root)
   directory?(sys, root) and
   file-exists?(sys, path) and
   not directory?(sys, path)

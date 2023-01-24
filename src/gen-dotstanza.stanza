@@ -16,31 +16,31 @@ public defn generate-dotstanza-config (sys:System,
                                        stanza-dir:String,
                                        config:ConfigFile) -> String :
   ;Get the directory where it should be.
-  val path = stanza-config-dir(root, signature(config))
+  val config-dir = path(ConfigFolder(signature(config)), root)
   
   ;If it doesn't already exist, then generate it.
-  if not file-exists?(sys, path) :
-    within temp = make-temp-dir(sys, stanzaenv-temp-dir(root)) :
+  if not file-exists?(sys, config-dir) :
+    within temp = make-temp-dir(sys, path(TempFolder(), root)) :
       run-install-command(sys, stanza-dir, temp)
       attach-data(sys, temp, config)
-      move-dir(sys, temp, path)
+      move-dir(sys, temp, config-dir)
       
   ;Return the folder where it is generated.
-  path
+  config-dir
 
 ;Run the "stanza install" command.
 defn run-install-command (sys:System,
                           stanza-dir:String,
                           config-dir:String) -> False :
-  val stanza-exe = stanza-exe-path(stanza-dir)
+  val stanza-exe = string-join(["./" stanza-exe(current-platform(sys))])
   val platform-str = switch(current-platform(sys)) :
     OS-X : "os-x"
     Linux : "linux"
     Windows : "windows"
   val [ret, output] = call-system(
                         sys
-                        "./stanza"
-                        ["./stanza" "install" "-platform" platform-str "-path" config-dir]
+                        stanza-exe
+                        [stanza-exe "install" "-platform" platform-str "-path" config-dir]
                         stanza-dir
                         false)
   if ret != 0 :

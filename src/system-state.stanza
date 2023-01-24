@@ -2,6 +2,7 @@ defpackage stanzaenv/system-state :
   import core
   import collections
   import stz/printing-utils
+  import core/parsed-path
   import stanzaenv/versions
   import line-wrap
   import stanzaenv/config
@@ -29,12 +30,12 @@ public defmulti path (e:EnvInstallation) -> String
 ;Represents a hard-coded default location for the installation directory.
 ;e.g. ~/.stanzaenv
 public defstruct DefaultInstallation <: EnvInstallation :
-  path: String with: (as-method => true)
+  path: String with: (as-method => true, ensure => absolute!)
 
 ;Represents a envvar-controlled location for the installation directory.
 ;e.g. by STANZAENV_DIR
 public defstruct ConfigInstallation <: EnvInstallation :
-  path: String with: (as-method => true)
+  path: String with: (as-method => true, ensure => absolute!)
 
 ;Represents that stanzaenv is not installed properly.
 public defstruct NoInstallation <: EnvInstallation
@@ -48,6 +49,16 @@ public defstruct PathStatus :
 ;and installed.
 public defstruct InstalledStanza :
   version: NamedVersion
+
+;============================================================
+;===================== Ensure ===============================
+;============================================================
+
+;Ensure it's a proper path.
+defn absolute! (description:String, path:String) :
+  val parsed = parse-path(path)
+  if not absolute?(parsed) :
+    fatal("Path %~ given to %_ is not absolute." % [path, description])
 
 ;============================================================
 ;===================== Accessors ============================
