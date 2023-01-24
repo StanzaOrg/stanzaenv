@@ -13,6 +13,19 @@ public defn resolve-path! (s:System, path:String) -> String :
   else : throw(PathResolutionError(path))
 
 ;============================================================
+;=================== Path Extensions ========================
+;============================================================
+
+;Strip away the .exe suffix if it has one.
+public defn strip-exe? (s:String) -> String :
+  if suffix?(s, ".exe") :
+    val n1 = length(s)
+    val n2 = length(".exe")
+    s[0 to n1 - n2]
+  else :
+    s
+
+;============================================================
 ;===================== Temp Directories =====================
 ;============================================================
 

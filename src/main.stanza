@@ -3,11 +3,13 @@ defpackage stanzaenv/main :
   import collections
   import arg-parser
   import stanzaenv/system-api
+  import stanzaenv/system-utils
   import stanzaenv/standard-system
   import stanzaenv/system-state
   import stanzaenv/read-state
   import stanzaenv/request-exit
   import stanzaenv/versions
+  import stanzaenv/shims
 
 ;============================================================
 ;====================== Framework ===========================
@@ -206,14 +208,47 @@ new-command $ Command(
 )
 
 ;============================================================
+;===================== Install Shims ========================
+;============================================================
+
+new-command $ Command(
+  "install-shims"
+  ZeroArg, false,
+  [],
+  "Based on the current configuration, install any missing shims to PATH."
+  false,
+  fn (cmd-args) :
+    val [sys, state] = initialize-system()
+    create-shims(sys, state)
+)
+
+;============================================================
+;===================== Uninstall Shims ======================
+;============================================================
+
+new-command $ Command(
+  "uninstall-shims"
+  ZeroArg, false,
+  [],
+  "Uninstall all shims from PATH."
+  false,
+  fn (cmd-args) :
+    val [sys, state] = initialize-system()
+    clear-shims(sys, install-path(state))
+)
+
+;============================================================
 ;====================== Classify Mode =======================
 ;============================================================
 
+;Determine the mode in which the executable was launched.
 deftype LaunchMode 
 
+;Launch as a shim.
 defstruct ShimMode <: LaunchMode :
-  program:String
+  name:String
 
+;Launch main 'stanzaenv' executable.
 defstruct MainMode <: LaunchMode
 
 ;Retrieve the launch mode for the program.
@@ -222,11 +257,11 @@ defn launch-mode () -> LaunchMode :
   if empty?(args) :
     MainMode()
   else :
-    val arg0 = args[0]
-    if suffix?(arg0, "stanza") :
-      ShimMode("stanza")
-    else :
+    val arg0 = strip-exe?(args[0])
+    if suffix?(arg0, "stanzaenv") :
       MainMode()
+    else :
+      ShimMode(arg0)
 
 ;============================================================
 ;======================== Launch ============================
@@ -237,8 +272,10 @@ defn main () :
     (mode:ShimMode) :
       try :
         val [sys, state] = initialize-system()
+        val extension = name(mode) when name(mode) != "stanza"
         stanzaenv/call-stanza/call-stanza(
           sys,
+          extension,
           to-tuple(command-line-arguments()),
           state)
       catch (e) :

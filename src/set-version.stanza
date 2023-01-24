@@ -3,6 +3,7 @@ defpackage stanzaenv/set-version :
   import collections
   import stanzaenv/versions
   import stanzaenv/system-api
+  import stanzaenv/system-utils
   import stanzaenv/system-state
   import stanzaenv/config
   import stanzaenv/errors
@@ -32,7 +33,8 @@ public defn set-project-stanza-version (sys:System,
       (old-config:ConfigFile) :
         sub-version(old-config, resolve(sys,version))
       (f:False) :
-        ConfigFile(project-config-file(), resolve(sys,version))
+        val path = relative-to(resolve-path!(sys, "."), project-config-file())
+        ConfigFile(path, resolve(sys,version))
     spit(sys, to-string(location(config)), config, false)
     println("Project Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)

@@ -620,6 +620,37 @@ defn try-set-state-1 () :
   within print-errors() :
     println(set-global-stanza-version(sys, NamedVersion([0 17 50]), system-state(sys)))  
 
+defn try-set-state-2 () :
+  val global-config = \<STR>
+    stanza-version: "0.17.50"
+  <STR>
+  val sys = MockSystem(
+    ;env vars
+    ["PATH" => "/users/emacs:/Applications/go:/users/patricksli/.stanzaenv/bin:/Applications/stanzaenv/bin"
+     "SHELL" => "bin/zsh"
+     "HOME" => "/users/patricksli"
+     "STANZAENV_DIR" => "/Applications/stanzaenv"]
+    
+    ;existing files
+    ["/Applications/stanzaenv/bin/stanzaenv"
+     "/Applications/stanzaenv/stanzaenv.config" => global-config
+     "/Applications/stanzaenv/stanza/v0.5.4/"
+     "/Applications/stanzaenv/stanza/v0.5.3/"
+     "/Applications/stanzaenv/stanza/v0.5.2/"
+     "/users/patricksli/.stanzaenv/bin/stanzaenv"
+     "/users/patricksli/.stanzaenv/stanzaenv.config" => global-config]
+
+    ;working dir
+    "/users/myworkdir"
+    
+    ;prompts
+    []
+
+    ;platform
+    OS-X)
+  within print-errors() :
+    println(set-project-stanza-version(sys, NamedVersion([0 17 50]), system-state(sys)))  
+
 
 ;============================================================
 ;====================== Try File Tree =======================
@@ -749,5 +780,6 @@ within (package,sig) = set-stack-trace-filter() :
 ;try-read-state-3()
 ;try-read-state-4()
 ;try-set-state-1()
+try-set-state-2()
 ;try-filetree-4()
-try-call-stanza()
+;try-call-stanza()

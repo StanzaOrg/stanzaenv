@@ -22,7 +22,7 @@ public defn install-stanza-version (sys:System,
       download-to-file(sys, url, zip-path)
       unzip-to-folder(sys, zip-path, temp-stanza)
       move-dir(sys, temp-stanza, path(StanzaFolder(v), root))
-      set-executable(sys, path(StanzaExe(v), root))
+      set-executable(sys, path(StanzaExe(v), current-platform(sys), root))
       println("Successfully installed Stanza %_." % [v])
   
 

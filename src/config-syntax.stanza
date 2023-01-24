@@ -87,12 +87,3 @@ defsyntax stanzaenv-syntax :
   defproduction string!: String
   defrule string! = (?v:#string)
   fail-if string! = () : ConfigSyntaxError(closest-info(), "String expected here.")
-
-;Strip away the .exe suffix if it has one.
-defn strip-exe? (s:String) -> String :
-  if suffix?(s, ".exe") :
-    val n1 = length(s)
-    val n2 = length(".exe")
-    s[0 to n1 - n2]
-  else :
-    s

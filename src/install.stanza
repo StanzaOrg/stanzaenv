@@ -40,7 +40,7 @@ defn fresh-install (sys:System) -> False :
     download-to-file(sys, url, stanzaenv-zip)
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
-    set-executable(sys, path(StanzaenvExe(), path(install-dir)))
+    set-executable(sys, path(StanzaenvExe(), current-platform(sys), path(install-dir)))
     create-shim(sys, path(install-dir), "stanza")
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
