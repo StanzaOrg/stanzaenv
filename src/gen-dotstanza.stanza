@@ -8,6 +8,7 @@ defpackage stanzaenv/gen-dotstanza :
   import stanzaenv/paths
   import stanzaenv/config
   import stanzaenv/errors
+  import stz/printing-utils
 
 ;Ensure that a .stanza file for the given configuration
 ;has been generated.
@@ -48,30 +49,23 @@ defn run-install-command (sys:System,
 
 ;Attach the other data in the config: proj-files, pkg-dirs.
 defn attach-data (sys:System, config-dir:String, config:ConfigFile) :
-  ;Detect whether there is any data to attach.
-  val data? = any?({_ is PkgDirsStmt|ProjFilesStmt}, stmts(config))
+  ;Accumulate statements to add to the config file.
+  val statements = Vector<?>()
 
-  ;If there is, then generate the right data.
-  if data? :
+  ;Configure the pkg-dirs.
+  val pkg-dirs = pkg-dirs(config)
+  if not empty?(pkg-dirs) :
+    val s = "pkg-dirs = (%_)" % [indented-field-list(seq(written,pkg-dirs))]
+    add(statements, s)
 
-    ;Retrieve the additional data as a Printable.
-    val data = new Printable :
-      defmethod print (o:OutputStream, this) :
-        print(o, "\n")
-        for stmt in stmts(config) do :
-          match(stmt) :
-            (stmt:PkgDirsStmt) :
-              val path-strings = for path in paths(stmt) seq :
-                val str = to-string(relative-to-dir(location(config), path))
-                Indented("\n" % [str])
-              print(o, "pkg-dirs = (%*)" % [path-strings])
-            (stmt:ProjFilesStmt) :
-              val path-strings = for path in paths(stmt) seq :
-                val str = to-string(relative-to-dir(location(config), path))
-                Indented("\n%~" % [str])
-              print(o, "proj-files = (%*)" % [path-strings])
-            (stmt) :
-              false
-    ;Print it out to the config file.
+  ;Configure the proj-files.
+  val proj-files = proj-files(config)
+  if not empty?(proj-files) :
+    val s = "proj-files = (%_)" % [indented-field-list(seq(written,proj-files))]
+    add(statements, s)
+
+  ;Add the data to the config file, if there is any.
+  if not empty?(statements) :
+    val snippet = "\n%n" % [statements]
     val filename = relative-to(config-dir, ".stanza")
-    spit(sys, filename, data, true)
+    spit(sys, filename, snippet, true)

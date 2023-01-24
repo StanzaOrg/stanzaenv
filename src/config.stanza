@@ -90,7 +90,23 @@ public defn extension-path (f:ConfigFile, name:String) -> String|False :
     match(stmt:ExtensionStmt) :
       /name(stmt) == name
   match(stmt:ExtensionStmt) :
-    to-string(relative-to-dir(location(f), path(stmt)))
+    to-string(relative-to-file(location(f), path(stmt)))
+
+;Return the paths to the .pkg files.
+public defn pkg-dirs (f:ConfigFile) -> Tuple<String> :
+  val stmt = find-by<PkgDirsStmt>(stmts(f))
+  match(stmt:PkgDirsStmt) :
+    for path in paths(stmt) map :
+      to-string(relative-to-file(location(f), path))
+  else : []
+  
+;Return the paths to the .proj files.
+public defn proj-files (f:ConfigFile) -> Tuple<String> :
+  val stmt = find-by<ProjFilesStmt>(stmts(f))
+  match(stmt:ProjFilesStmt) :
+    for path in paths(stmt) map :
+      to-string(relative-to-file(location(f), path))
+  else : []
 
 ;Retrieve all the extension names in the config file.
 public defn all-extension-names (f:ConfigFile) -> Tuple<String> :

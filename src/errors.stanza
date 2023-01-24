@@ -131,10 +131,10 @@ defmethod print (o:OutputStream, e:InstallationCommandFailed) :
 
 ;Occurs when the Stanza directory does not contain the stanza executable.
 public defstruct MissingStanzaExe <: StanzaEnvError :
-  stanza-dir:String
+  stanza-exe:String
 
 defmethod print (o:OutputStream, e:MissingStanzaExe) :
-  print(o, "Stanza directory '%_' is missing the 'stanza' executable" % [stanza-dir(e)]) 
+  print(o, "Stanza executable '%_' is missing." % [stanza-exe(e)]) 
 
 ;Occurs when the currently active Stanza is not installed.
 public defstruct ActiveVersionNotInstalled <: StanzaEnvError :

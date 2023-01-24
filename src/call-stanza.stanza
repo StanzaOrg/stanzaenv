@@ -32,7 +32,7 @@ public defn call-stanza (sys:System,
                      else : relative-to(stanza-dir, stanza-exe(current-platform(sys)))
     ;Ensure that the executable is there.
     if not file-exists?(sys,stanza-exe) :
-      throw(MissingStanzaExe(stanza-dir))
+      throw(MissingStanzaExe(stanza-exe))
     ;Ensure that the DotStanza configuration file exists.
     val config-dir = generate-dotstanza-config(
                        sys,
