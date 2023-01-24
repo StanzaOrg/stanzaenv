@@ -47,11 +47,16 @@ defsyntax stanzaenv-syntax :
     VersionStmt(v)
     
   defrule stmt = (extension: ?path:#path!) :
-    val n = length(entries(path))
-    val last-entry = entries(path)[n - 1]
-    if last-entry is-not NamedPath :
-      throw(ConfigSyntaxError(closest-info(), "Invalid path to extension executable for Stanza."))
-    ExtensionStmt(name(last-entry as NamedPath), path)
+    ;Strip away and keep only the shim name from the path.
+    defn shim-name (path:ParsedPath) -> String :
+      val n = length(entries(path))
+      val last-entry = entries(path)[n - 1]
+      match(last-entry) :
+        (e:NamedPath) : strip-exe?(name(e))
+        (e) : throw(ConfigSyntaxError(
+                      closest-info(),
+                      "Invalid path to extension executable for Stanza."))
+    ExtensionStmt(shim-name(path), path)
 
   defrule stmt = (pkg-dirs: (?paths:#path! ...)) :
     PkgDirsStmt(to-tuple(paths))
@@ -82,3 +87,12 @@ defsyntax stanzaenv-syntax :
   defproduction string!: String
   defrule string! = (?v:#string)
   fail-if string! = () : ConfigSyntaxError(closest-info(), "String expected here.")
+
+;Strip away the .exe suffix if it has one.
+defn strip-exe? (s:String) -> String :
+  if suffix?(s, ".exe") :
+    val n1 = length(s)
+    val n2 = length(".exe")
+    s[0 to n1 - n2]
+  else :
+    s

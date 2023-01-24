@@ -9,7 +9,7 @@ defpackage stanzaenv/shims :
 ;Delete all the shims in the bin directory except for the default shims.
 public defn clear-shims (sys:System, root:String) -> False :
   val keep = default-bin-files(sys)
-  val bin-dir = bin-dir(root)
+  val bin-dir = path(BinFolder(), root)
   for file in list-dir(sys, bin-dir) do :
     if not contains?(keep, file) :
       delete-recursive(sys, relative-to(bin-dir, file))
@@ -18,7 +18,7 @@ public defn clear-shims (sys:System, root:String) -> False :
 public defn create-shims (sys:System, state:SystemState) -> False :
   val root = install-path(state)
   for name in extension-names(state) do :
-    val shim-exe = relative-to(bin-dir(root), name)
+    val shim-exe = path(ShimExe(name), root)
     if not file-exists?(sys, shim-exe) :
       create-shim(sys, root, name)
 
@@ -35,8 +35,7 @@ defn extension-names (state:SystemState) -> Collection<String> :
 
 ;Create a shim with the given name.
 public defn create-shim (sys:System, root:String, shim-name:String) -> False :
-  val stanzaenv-exe = stanzaenv-exe-path(root)
-  val bin = bin-dir(root)
-  val shim = relative-to(bin, shim-name)
-  copy-file(sys, stanzaenv-exe, shim)
-  set-executable(sys, shim)
+  val stanzaenv-exe = path(StanzaenvExe(), root)
+  val shim-exe = path(ShimExe(shim-name), root)
+  copy-file(sys, stanzaenv-exe, shim-exe)
+  set-executable(sys, shim-exe)

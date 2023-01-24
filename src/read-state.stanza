@@ -90,7 +90,7 @@ public defn detect-installation (sys:System) -> EnvInstallation :
 
 ;Returns true if the given root is a valid installation.
 defn valid-installation? (sys:System, root:String) -> True|False :
-  val path = relative-to(root, relpath-to-stanzaenv())
+  val path = path(StanzaenvExe(), root)
   directory?(sys, root) and
   file-exists?(sys, path) and
   not directory?(sys, path)
@@ -101,7 +101,7 @@ defn valid-installation? (sys:System, root:String) -> True|False :
 
 defn read-path-status (sys:System, root:String) -> PathStatus :
   val syspaths = system-paths(sys)
-  val index = find-on-path-list(sys, syspaths, bin-dir(root))
+  val index = find-on-path-list(sys, syspaths, path(BinFolder(), root))
   PathStatus(syspaths, index)
 
 ;============================================================
@@ -109,7 +109,7 @@ defn read-path-status (sys:System, root:String) -> PathStatus :
 ;============================================================
 
 defn detect-installed-versions (sys:System, root:String) -> Tuple<InstalledStanza> :
-  val dir = stanza-version-dir(root)
+  val dir = path(StanzasFolder(), root)
   if file-exists?(sys, dir) :
     to-tuple $ for file in list-dir(sys, dir) seq? :
       if directory?(sys, relative-to(dir,file)) :
