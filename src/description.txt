@@ -1,5 +1,9 @@
 ## Source Files ##
 
+Docs:
+
+  @[file:extensions.txt] Small FAQ about how Stanza extensions work.
+
 Development:
 
   @[file:harness.stanza] Main development entry point.
@@ -18,9 +22,25 @@ Main Flow:
 
   @[file:read-state.stanza] Read in the current system state of stanzaenv.
 
+  @[file:gen-dotstanza.stanza] Generate the .stanza configuration file.
+
+  @[file:shims.stanza] Create/Delete the binary shims.
+
+  @[file:call-stanza.stanza] Call the correct version of Stanza with the right configuration.
+
+  @[file:set-version.stanza] Set the global/project Stanza version.
+
+  @[file:main.stanza] Main command-line launcher.
+
+Versions:
+
+  @[file:current-version.stanza] Current version of stanzaenv. Bump this when stanzaenv gets updated.  
+
 Configuration:
 
-  @[file:configuration.txt] See this document for a FAQ on how configuration works.
+  @[file:config.stanza] Holds the IR for the configuration file.
+
+  @[file:config-syntax.stanza] Syntax for reading the configuration file.
 
 Errors:
 
@@ -31,6 +51,8 @@ Abstract System:
   @[file:system-api.stanza] Abstract interface for exposing system functionality.
 
   @[file:system-utils.stanza] Utilities built on the System API.
+
+  @[file:standard-system.stanza] System implementations of the abstract system API.
 
 Hardcoded Strings:
 
@@ -47,7 +69,25 @@ Standalone System Functionality:
   @[file:windows-registry.stanza] Handles how to write/read the Windows registry.
   @[file:windows-registry.c] C bindings for Windows registry.
 
+  @[file:sysutils.stanza] Handle small system utilities: chmod.
+  @[file:sysutils.c] C bindings for small system utilities.
+
   @[file:versions.stanza] Small utilities for handling version strings and VersionSpecifier.
+
+  @[file:request-exit.stanza] Gracefully request program to exit. Properly exit try/finally blocks.
+
+  @[file:printing.stanza] Small utility for printing line-wrapped paragraphs.
+
+Testing:
+
+  @[file:test-e2e.stanza] End to end tests
+  
+  @[file:mock-prompter.stanza] Simple Question-and-Answer Prompter for setting up Test Harnesses
+  
+  @[file:debugenv.stanza] Simple environment variable environment for debugging environment to
+  intercept functions.
+
+  @[file:filetree.stanza] Dummy implementation of a system directory structure.
 
 ## Curl Bindings ##
 
