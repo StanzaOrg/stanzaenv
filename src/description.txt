@@ -84,7 +84,7 @@ Testing:
   
   @[file:mock-prompter.stanza] Simple Question-and-Answer Prompter for setting up Test Harnesses
   
-  @[file:debugenv.stanza] Simple environment variable environment for debugging environment to
+  @[file:debugenv.stanza] Simple environment variable accessors for debugging environment to
   intercept functions.
 
   @[file:filetree.stanza] Dummy implementation of a system directory structure.
