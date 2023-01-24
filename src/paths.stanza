@@ -5,21 +5,9 @@ defpackage stanzaenv/paths :
   import stanzaenv/system-utils
   import stanzaenv/versions
 
-;Relative path to stanzaenv executable.
-public defn relpath-to-stanzaenv () -> String :
-  "bin/stanzaenv"
-
-;Path to the stanzaenv binary directory.
-public defn bin-dir (root:String) -> String :
-  relative-to(root, "bin")
-
 ;Name of the stanza version configuration file.
 public defn project-config-file () -> String :
   ".stanza-version"
-
-;Name of the global stanzaenv configuration file.
-public defn global-config-file (root:String) -> String :
-  relative-to(root, "stanzaenv.config")
 
 ;Retrieve the default installation directory.
 ;1) First try $HOME/.stanzaenv
@@ -33,40 +21,70 @@ public defn default-installation-dir (sys:System) -> String|False :
 
 ;Return the default files in the bin directory.
 public defn default-bin-files (sys:System) -> Tuple<String> :
-  switch(current-platform(sys)) :
-    Windows : ["stanza.exe" "stanzaenv.exe"]
-    else : ["stanza" "stanzaenv"]
+  for item in [StanzaenvExe(), ShimExe("stanza")] map :
+    exe-name(item, current-platform(sys))
 
-;Return the path to the stanzaenv executable.
-public defn stanzaenv-exe-path (root:String) -> String :
-  relative-to(root, relpath-to-stanzaenv())
+;============================================================
+;==================== Directory Structure ===================
+;============================================================
 
-;Return the directory that all the Stanza versions are stored.
-public defn stanza-version-dir (root:String) -> String :
-  relative-to(root, "stanza")
+;Listing of all items in the Stanzaenv folder.
+public deftype StanzaenvDirItem
+public defstruct BinFolder <: StanzaenvDirItem
+public defstruct ConfigsFolder <: StanzaenvDirItem
+public defstruct RootFolder <: StanzaenvDirItem
+public defstruct StanzasFolder <: StanzaenvDirItem
+public defstruct TempFolder <: StanzaenvDirItem
+public defstruct ConfigFolder <: StanzaenvDirItem : (signature:String)
+public defstruct StanzaFolder <: StanzaenvDirItem : (version:NamedVersion)
+public defstruct StanzaenvExe <: StanzaenvDirItem
+public defstruct ShimExe <: StanzaenvDirItem : (name:String)
+public defstruct StanzaenvConfig <: StanzaenvDirItem
+public defstruct DotStanza <: StanzaenvDirItem : (signature:String)
 
-;Return the directory where all the .stanza config files are stored.
-public defn stanza-config-dir (root:String) -> String :
-  relative-to(root, "configs")
+;Return the relative path of this item to the stanzaenv root.
+public defn path (item:StanzaenvDirItem, platform:Platform|False) -> String :
+  match(item) :
+    (item:BinFolder) :
+      "bin"
+    (item:ConfigsFolder) :
+      "configs"
+    (item:RootFolder) :
+      "."
+    (item:StanzasFolder) :
+      "stanza"
+    (item:TempFolder) :
+      "temp"
+    (item:ConfigFolder) :
+      to-string("configs/%_" % [signature(item)])
+    (item:DotStanza) :
+      to-string("configs/%_/.stanza" % [signature(item)])    
+    (item:StanzaFolder) :
+      val [a b c] = value(version(item))
+      to-string("stanza/v%_.%_.%_" % [a, b, c])
+    (item:ShimExe|StanzaenvExe) :
+      to-string("bin/%_" % [exe-name(item, platform as Platform)])
+    (item:StanzaenvConfig) :
+      "stanzaenv.config"
 
-;Return the directory where a specific .stanza config file is stored.
-public defn stanza-config-dir (root:String, signature:String) -> String :
-  relative-to(stanza-config-dir(root), signature)
+;Retrieve the filename of the given executable on the platform.
+public defn exe-name (item:ShimExe|StanzaenvExe, platform:Platform) -> String :
+  val exe-extension = switch(platform) :
+    Windows : ".exe"
+    else : ""
+  match(item) :
+    (item:StanzaenvExe) :
+      to-string("stanzaenv%_" % [exe-extension])
+    (item:ShimExe) :
+      to-string("%_%_" % [name(item), exe-extension])
 
-;Return the path to the stanza executable given the Stanza
-;installation directory.
-public defn stanza-exe-path (stanza-root:String) -> String :
-  relative-to(stanza-root, "stanza")
+;Return the absolute path of this item.
+public defn path (item:StanzaenvDirItem, platform:Platform|False, root:String) -> String :
+  relative-to(root, path(item, platform))
 
-;Return the path to the Stanza directory.
-public defn stanza-version-path (stanzaenv-root:String, version:NamedVersion) -> String :
-  val [a,b,c] = value(version)
-  val folder = to-string("v%_.%_.%_" % [a,b,c])
-  relative-to(stanza-version-dir(stanzaenv-root), folder)
-
-;Return the path to the stanzaenv temp directory.
-public defn stanzaenv-temp-dir (stanzaenv-root:String) -> String :
-  relative-to(stanzaenv-root, "temp")
+;Return the absolute path of this item. Assumes that platform is not necessary.
+public defn path (item:StanzaenvDirItem, root:String) -> String :
+  relative-to(root, path(item, false))
 
 ;============================================================
 ;====================== Path Utilities ======================

@@ -58,8 +58,8 @@ defn all-parent-directories (sys:System, start:String) -> Seq<ParsedPath> :
 ;============================================================
 
 defn read-global-config (sys:System, root:String) -> ConfigFile|False :
-  if file-exists?(sys, global-config-file(root)) :
-    read-config-file(sys, global-config-file(root))
+  if file-exists?(sys, path(StanzaenvConfig(), root)) :
+    read-config-file(sys, path(StanzaenvConfig(), root))
 
 ;============================================================
 ;=================== Detect Installation ====================
