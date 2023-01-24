@@ -339,8 +339,9 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
         simple-field("args", args)]
       println("MockSystem: replace-current-process%_" % [colon-field-list(items)])
       
-    defmethod prompt-user (this, question:String) :
-      prompt(prompter, question)
+    defmethod prompt-user (this, question:String, short:String) :
+      val str = string-join([question " " short])
+      prompt(prompter, str)
 
 ;============================================================
 ;==================== Try Out Install =======================

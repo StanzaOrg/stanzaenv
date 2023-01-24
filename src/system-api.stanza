@@ -24,7 +24,7 @@ public defmulti unzip-to-folder (s:System, zipfile:String, folder:String) -> Fal
 
 public defmulti delete-recursive (s:System, folder:String) -> False
 
-public defmulti prompt-user (s:System, prompt:String) -> String
+public defmulti prompt-user (s:System, prompt:String, short:String) -> String
 
 public defmulti move-dir (s:System, old-path:String, new-path:String) -> False
 

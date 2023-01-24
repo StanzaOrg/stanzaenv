@@ -8,6 +8,7 @@ defpackage stanzaenv/set-version :
   import stanzaenv/config
   import stanzaenv/errors
   import stanzaenv/paths
+  import stanzaenv/printing
 
 ;Set the global Stanza version currently being used.
 public defn set-global-stanza-version (sys:System,
@@ -21,7 +22,7 @@ public defn set-global-stanza-version (sys:System,
         val global-config = path(StanzaenvConfig(), install-path(state))
         ConfigFile(global-config, resolve(sys, version))
     spit(sys, to-string(location(config)), config, false)
-    println("Active Stanza version changed to '%_'." % [version])
+    paragraph("Active Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)
 
 ;Set the project Stanza version currently being used.
@@ -36,7 +37,7 @@ public defn set-project-stanza-version (sys:System,
         val path = relative-to(resolve-path!(sys, "."), project-config-file())
         ConfigFile(path, resolve(sys,version))
     spit(sys, to-string(location(config)), config, false)
-    println("Project Stanza version changed to '%_'." % [version])
+    paragraph("Project Stanza version changed to '%_'." % [version])
     check-new-version(sys, state, version)
 
 ;Clears the currently-set Project version.
@@ -47,9 +48,9 @@ public defn clear-project-stanza-version (sys:System,
       (config:ConfigFile) :
         val filename = to-string(location(config))
         delete-recursive(sys, filename)
-        println("Deleted project-specific Stanza settings at '%_'." % [filename])        
+        paragraph("Deleted project-specific Stanza settings at '%_'." % [filename])        
       (f:False) :
-        println("This directory does not make use of a project-specific Stanza version.")
+        paragraph("This directory does not make use of a project-specific Stanza version.")
 
 ;Check the validity of the new Stanza version, and
 ;print warnings.
@@ -59,11 +60,11 @@ defn check-new-version (sys:System,
   match(version) :
     (version:NamedVersion) :
       if not installed?(state, version) :
-        println("Warning: This Stanza version has not yet been installed. Please \
-                 install it before using.")
+        paragraph("Warning: This Stanza version has not yet been installed. Please \
+                   install it before using.")
     (version:LocalVersion) :
       val fullpath = relative-to(path(version), stanza-exe(current-platform(sys)))
       if not file-exists?(sys, fullpath) :
-        println("Warning: There was no 'stanza' executable found at location '%_'." % [fullpath])
+        paragraph("Warning: There was no 'stanza' executable found at location '%_'." % [fullpath])
     (version:SystemVersion) :
       false

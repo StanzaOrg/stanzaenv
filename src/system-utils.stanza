@@ -2,6 +2,7 @@ defpackage stanzaenv/system-utils :
   import core
   import collections
   import stanzaenv/system-api
+  import stanzaenv/printing
 
 ;============================================================
 ;==================== Path Resolution =======================
@@ -92,12 +93,12 @@ public defstruct Bad <: PromptResult<Void> :
   message:String
 
 ;Prompt a user repeatedly and verify the output.
-public defn prompt-user<?T> (verify:String -> PromptResult<?T>, sys:System, prompt:String) -> T :
+public defn prompt-user<?T> (verify:String -> PromptResult<?T>, sys:System, prompt:String, short:String) -> T :
   let loop () :
-    val str = trim(prompt-user(sys, prompt))
+    val str = trim(prompt-user(sys, prompt, short))
     match(verify(str)) :
       (result:Good<T>) :
         value(result)
       (result:Bad) :
-        println(message(result))
+        paragraph(message(result))
         loop()

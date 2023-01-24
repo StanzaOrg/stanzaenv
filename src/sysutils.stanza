@@ -15,4 +15,4 @@ public lostanza defn chmod (path:ref<String>, mode:ref<Int>) -> ref<False> :
 public defstruct ChmodException <: IOException :
   value:String
 defmethod print (o:OutputStream, e:ChmodException) :
-  print(value(e))
+  print(o, value(e))

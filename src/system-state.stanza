@@ -202,7 +202,7 @@ defn format-global-version (config:ConfigFile|False) :
       (config:ConfigFile) :
         print(o, format(version(config)))
       (config:False) :
-        print(o, "No glboal Stanza version set.")
+        print(o, "No global Stanza version set.")
 
 defn format (v:VersionSpecifier) :
   match(v) :

@@ -8,6 +8,7 @@ defpackage stanzaenv/standard-system :
   import stanzaenv/sysutils
   import stanzaenv/debugenv
   import stanzaenv/mock-prompter
+  import stanzaenv/printing
 
 ;============================================================
 ;==================== Debugging Intercepts ==================
@@ -99,21 +100,28 @@ public defn StandardSystem () -> StandardSystem :
     defmethod delete-recursive (this, folder:String) -> False :
       delete-recursive(folder, false)
 
-    defmethod prompt-user (this, prompt:String) -> String :
+    defmethod prompt-user (this, prompt:String, short:String) -> String :
       match(prompter:MockPrompter) :
         try :
-          /prompt(prompter, prompt)
+          val prompt-str = to-string("%_ %_" % [prompt, short])
+          /prompt(prompter, prompt-str)
         catch (e) :
           println(e)
           request-exit(-1)
       else :
         #if-defined(PLATFORM-WINDOWS) :
-          val prompter = core/line-prompter/LinePrompter(prompt, prompt)
+          val indented-short = to-string("  %_" % [short])
+          val prompter = core/line-prompter/LinePrompter(indented-short, indented-short)
         #else :
-          val prompter = stz/line-noise-prompter/LineNoisePrompter(prompt, prompt)
+          val indented-short = to-string("  %_" % [short])
+          val prompter = stz/line-noise-prompter/LineNoisePrompter(indented-short, indented-short)
+        paragraph(prompt)
         match(get-line(prompter)) :
-          (str:String) : str
-          (f:False) : request-exit(0)
+          (str:String) :
+            println("")
+            str
+          (f:False) :
+            request-exit(0)
 
     defmethod move-dir (this, old-path:String, new-path:String) -> False :
       val parsed = parse-path(new-path)

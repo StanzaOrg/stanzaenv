@@ -8,6 +8,7 @@ defpackage stanzaenv/install-version :
   import stanzaenv/urls
   import stanzaenv/errors
   import stanzaenv/config
+  import stanzaenv/printing
 
 ;Download the given Stanza version.
 ;Assumes that it's not already installed.
@@ -23,6 +24,6 @@ public defn install-stanza-version (sys:System,
       unzip-to-folder(sys, zip-path, temp-stanza)
       move-dir(sys, temp-stanza, path(StanzaFolder(v), root))
       set-executable(sys, path(StanzaExe(v), current-platform(sys), root))
-      println("Successfully installed Stanza %_." % [v])
+      paragraph("Successfully installed Stanza %_." % [v])
   
 
