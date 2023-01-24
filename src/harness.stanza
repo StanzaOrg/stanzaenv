@@ -8,7 +8,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/urls
   import stanzaenv/system-state
   import stanzaenv/read-state
-;  import stanzaenv/install
+  import stanzaenv/install
   import stanzaenv/system-api
   import stanzaenv/versions
 ;  import stanzaenv/set-version
@@ -42,8 +42,8 @@ defn testing-state (ints:Seqable<Int>) -> SystemState :
 
   defn project-config () -> ConfigFile|False :
     switch(int-switch("project-version", 2)) :
-      0 : wrap-config(".stanza_version", version-spec())
-      1 : wrap-config("../../.stanza_version", version-spec())
+      0 : wrap-config("/users/patrick/.stanza_version", version-spec())
+      1 : wrap-config("/users/patrick/../../.stanza_version", version-spec())
       2 : false    
       
   defn version-spec () -> VersionSpecifier :
@@ -345,7 +345,7 @@ defn MockSystem (env-vars:Tuple<KeyValue<String,String>>
 ;============================================================
 ;==================== Try Out Install =======================
 ;============================================================
-;<comment>
+
 ;Does not install Stanza at the end.
 defn try-install-0 () :
   val sys = MockSystem(
@@ -378,15 +378,15 @@ defn try-install-1 () :
      "HOME" => "/users/patricksli"]
     
     ;existing files
-    ["/Applications/"]
+    ["/Applications/"
+     "/users/patricksli/"]
     
     ;working directory
     "/"
     
     ;prompts
-    ["installed in" => "/Applications/stanzaenv"
+    ["installed in" => ""
      "system PATH" => "yes"
-     "STANZAENV_DIR" => "yes"
      "initial version of Stanza" => "0.17.52"]
 
     ;platform
@@ -441,7 +441,7 @@ defn try-install-3 () :
     Windows)
     
   install-stanzaenv(sys)
-;<comment>
+
 ;============================================================
 ;================== Try parsing config file =================
 ;============================================================
@@ -455,21 +455,21 @@ defn try-parse-config-1 () :
   version: "0.1"
   <STR>
   within print-errors() :
-    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
+    println $ parse-config-file(reader/read-all(str), parse-path("/path/to/stanzaenv.config"))
 
 defn try-parse-config-2 () :
   val str = \<STR>
   stanza-version: "0.1.17"
   <STR>
   within print-errors() :
-    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
+    println $ parse-config-file(reader/read-all(str), parse-path("/path/to/stanzaenv.config"))
 
 defn try-parse-config-3 () :
   val str = \<STR>
   stanza-version: local "mypath"
   <STR>
   within print-errors() :
-    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
+    println $ parse-config-file(reader/read-all(str), parse-path("/path/to/stanzaenv.config"))
 
 defn try-parse-config-4 () :
   val str = \<STR>
@@ -482,7 +482,7 @@ defn try-parse-config-4 () :
     "projs/subproject.proj"
   <STR>
   within print-errors() :
-    println $ parse-config-file(reader/read-all(str), "path/to/stanzaenv.config")
+    println $ parse-config-file(reader/read-all(str), parse-path("/path/to/stanzaenv.config"))
 
 ;============================================================
 ;===================== Try Out Read State ===================
@@ -733,22 +733,22 @@ defn try-call-stanza () :
 within (package,sig) = set-stack-trace-filter() :
   package != `core
 print-states()
-;println("try-install-0")
-;try-install-0()
-;println("try-install-1")
-;try-install-1()
-;println("try-install-2")
-;try-install-2()
-;println("try-install-3")
-;try-install-3()
-println("try-parse-config-1")
-try-parse-config-1()
-println("try-parse-config-2")
-try-parse-config-2()
-println("try-parse-config-3")
-try-parse-config-3()
-println("try-parse-config-4")
-try-parse-config-4()
+println("try-install-0")
+try-install-0()
+println("try-install-1")
+try-install-1()
+println("try-install-2")
+try-install-2()
+println("try-install-3")
+try-install-3()
+;println("try-parse-config-1")
+;try-parse-config-1()
+;println("try-parse-config-2")
+;try-parse-config-2()
+;println("try-parse-config-3")
+;try-parse-config-3()
+;println("try-parse-config-4")
+;try-parse-config-4()
 ;try-read-state-1()
 ;try-read-state-2()
 ;try-read-state-3()

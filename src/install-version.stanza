@@ -23,7 +23,6 @@ public defn install-stanza-version (sys:System,
       val stanza-dir = stanza-version-path(root, v)
       move-dir(sys, relative-to(temp, "stanza"), stanza-dir)
       set-executable(sys, stanza-exe-path(stanza-dir))
-      run-install-command(sys, stanza-dir)
       println("Successfully installed Stanza %_." % [v])
   
 

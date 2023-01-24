@@ -72,12 +72,6 @@ public defn active-version (state:SystemState) -> VersionSpecifier|False :
       (c:ConfigFile) : return(version(c))
       (f:False) : false
 
-;Throw an exception if no version is in effect.
-public defn active-version! (state:SystemState) -> VersionSpecifier :
-  val v = active-version(state)
-  throw(NoActiveVersionSpecified()) when v is False
-  v as VersionSpecifier
-
 ;============================================================
 ;===================== Printers =============================
 ;============================================================

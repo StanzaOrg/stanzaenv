@@ -76,14 +76,30 @@ defn request-install-dir (sys:System) -> EnvInstallation :
         (f:False) :
           Bad("Could not determine default installation directory.")
     else :
-      match(parent-dir(dir)) :
-        (p:String) :
-          if file-exists?(sys, p) :
-            if directory?(sys, p) : Good(ConfigInstallation(dir))
-            else : Bad(to-string("The parent path '%_' is not a directory." % [p]))
-          else : Bad(to-string("Installation directory '%_' does not exist." % [p]))
-        (f:False) :
-          Bad("Improperly formatted installation directory.")
+      val split-dir = split-last-name(dir)
+      if empty?(split-dir) :
+        Bad("Improperly formatted installation directory.")
+      else :
+        val [parent-dir, stanza-dir] = value!(split-dir)
+        match(resolve-path(sys, parent-dir)) :
+          (full-parent-dir:String) :
+            if directory?(sys,parent-dir) :
+              val fullpath = relative-to(full-parent-dir, stanza-dir)
+              Good(ConfigInstallation(fullpath))
+            else :
+              Bad(to-string("The parent path '%_' is not a directory." % [full-parent-dir]))
+          (f:False) :
+            Bad(to-string("Installation directory '%_' does not exist." % [parent-dir]))      
+
+;Split out the last name in the path from its enclosing directory.
+defn split-last-name (dir:String) -> Maybe<[String, String]> :
+  val parsed = parse-path(dir)
+  val last-entry = entries(parsed)[length(entries(parsed)) - 1]
+  val parent-dir = enclosing-dir(parsed)
+  match(last-entry:NamedPath) :
+    One([to-string(parent-dir), name(last-entry)])
+  else :
+    None()
 
 ;Returns the parent directory for the given path, or false if it is
 ;not a valid path.

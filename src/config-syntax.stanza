@@ -3,6 +3,7 @@ defpackage stanzaenv/config-syntax :
   import collections
   import core/parsed-path
   import stanzaenv/system-api
+  import stanzaenv/system-utils
   import stanzaenv/config
   import stanzaenv/versions
   import stanzaenv/errors
@@ -14,12 +15,13 @@ defpackage stanzaenv/config-syntax :
 ;Parse a stanzaenv config file.
 public defn parse-config-file (forms:List, path:ParsedPath) -> ConfigFile :
   val stmts = to-tuple(parse-syntax[stanzaenv-syntax / #stmt! ...](forms))
-  validate(stmts, location)
+  validate(stmts, to-string(path))
   ConfigFile(path, stmts)
 
 ;Read a stanzaenv config file.
 public defn read-config-file (sys:System, file:String) -> ConfigFile :
-  parse-config-file(read-file(sys,file), file)
+  val path = parse-path(resolve-path!(sys, file))
+  parse-config-file(read-file(sys,file), path)
 
 ;============================================================
 ;=================== Syntax Definition ======================

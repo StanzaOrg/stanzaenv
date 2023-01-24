@@ -2,6 +2,7 @@ defpackage stanzaenv/paths :
   import core
   import core/parsed-path
   import stanzaenv/system-api
+  import stanzaenv/system-utils
   import stanzaenv/versions
 
 ;Relative path to stanzaenv executable.
@@ -26,7 +27,10 @@ public defn global-config-file (root:String) -> String :
 public defn default-installation-dir (sys:System) -> String|False :
   val home = get-env(sys, "HOME")
   match(home:String) :
-    string-join([home "/.stanzaenv"])
+    match(resolve-path(sys,home)) :
+      (fullhome:String) : relative-to(fullhome, ".stanzaenv")
+      (f:False) : false
+
 
 ;Return the path to the stanzaenv executable.
 public defn stanzaenv-exe-path (root:String) -> String :
