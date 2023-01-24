@@ -33,7 +33,7 @@ defn fresh-install (sys:System) -> False :
   ;Install the initial version of Stanza.
   val install-dir = request-install-dir(sys)
   val parent-dir = parent-dir(path(install-dir)) as String
-  within temp = make-temp-dir(sys, parent-dir) :    
+  within temp = make-temp-dir(sys, parent-dir) :
     val url = stanzaenv-zip-url(current-platform(sys))
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
     download-to-file(sys, url, stanzaenv-zip)
@@ -43,7 +43,7 @@ defn fresh-install (sys:System) -> False :
     create-shims(sys, path(install-dir))
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
-  initialize-stanzaenv-env-var(sys, install-dir)  
+  initialize-stanzaenv-env-var(sys, install-dir)
   install-initial-stanza-version(sys, install-dir)
 
 ;Create the shim executables.
@@ -53,7 +53,7 @@ defn create-shims (sys:System, root:String) -> False :
   for shim in shim-paths do :
     copy-file(sys, stanzaenv-exe, shim)
     set-executable(sys, shim)
-        
+
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :
   match(install) :
@@ -89,7 +89,7 @@ defn request-install-dir (sys:System) -> EnvInstallation :
             else :
               Bad(to-string("The parent path '%_' is not a directory." % [full-parent-dir]))
           (f:False) :
-            Bad(to-string("Installation directory '%_' does not exist." % [parent-dir]))      
+            Bad(to-string("Installation directory '%_' does not exist." % [parent-dir]))
 
 ;Split out the last name in the path from its enclosing directory.
 defn split-last-name (dir:String) -> Maybe<[String, String]> :
@@ -109,7 +109,7 @@ defn parent-dir (dir:String) -> String|False :
 
 ;Request an initial version for the system to install.
 defn request-initial-version (sys:System) -> NamedVersion|False :
-  val msg = "What initial version of Stanza should be installed? Leave blank to leave Stanza uninstalled: "  
+  val msg = "What initial version of Stanza should be installed? Leave blank to leave Stanza uninstalled: "
   within version-str = prompt-user(sys, msg) :
     if version-str == "" :
       Good(false)
@@ -127,7 +127,7 @@ defn initialize-stanzaenv-env-var (sys:System, install:EnvInstallation) -> False
       val stanzaenv-path = resolve-path!(sys, path(install))
       try :
         ;Check whether it's set already.
-        val already-set? = 
+        val already-set? =
           match(get-env(sys, "STANZAENV_DIR")) :
             (dir:String) : resolve-path(sys,dir) == stanzaenv-path
             (f:False) : false
@@ -196,4 +196,4 @@ defn install-initial-stanza-version (sys:System, install:EnvInstallation) -> Fal
       install-stanza-version(sys, version, path(install))
       set-global-stanza-version(sys, version, system-state(sys,install))
     (version:False) :
-      println("Leaving Stanza uninstalled.")  
+      println("Leaving Stanza uninstalled.")

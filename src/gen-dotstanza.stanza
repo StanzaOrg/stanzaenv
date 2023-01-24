@@ -21,8 +21,8 @@ public defn generate-dotstanza-config (sys:System,
   ;If it doesn't already exist, then generate it.
   if not file-exists?(sys, path) :
     within temp = make-temp-dir(sys, stanzaenv-temp-dir(root)) :
-      run-install-command(sys, stanza-dir, path)
-      attach-data(sys, path, config)
+      run-install-command(sys, stanza-dir, temp)
+      attach-data(sys, temp, config)
       move-dir(sys, temp, path)
       
   ;Return the folder where it is generated.
@@ -48,24 +48,30 @@ defn run-install-command (sys:System,
 
 ;Attach the other data in the config: proj-files, pkg-dirs.
 defn attach-data (sys:System, config-dir:String, config:ConfigFile) :
-  ;Retrieve the additional data as a Printable.
-  val data = new Printable :
-    defmethod print (o:OutputStream, this) :
-      print(o, "\n")
-      for stmt in stmts(config) do :
-        match(stmt) :
-          (stmt:PkgDirsStmt) :
-            val path-strings = for path in paths(stmt) seq :
-              val str = to-string(relative-to-dir(location(config), path))
-              Indented("\n" % [str])
-            print(o, "pkg-dirs = (%*)" % [path-strings])
-          (stmt:ProjFilesStmt) :
-            val path-strings = for path in paths(stmt) seq :
-              val str = to-string(relative-to-dir(location(config), path))
-              Indented("\n%~" % [str])
-            print(o, "proj-files = (%*)" % [path-strings])
-          (stmt) :
-            false
-  ;Print it out to the config file.
-  val filename = relative-to(config-dir, ".stanza")
-  spit(sys, filename, data, true)
+  ;Detect whether there is any data to attach.
+  val data? = any?({_ is PkgDirsStmt|ProjFilesStmt}, stmts(config))
+
+  ;If there is, then generate the right data.
+  if data? :
+
+    ;Retrieve the additional data as a Printable.
+    val data = new Printable :
+      defmethod print (o:OutputStream, this) :
+        print(o, "\n")
+        for stmt in stmts(config) do :
+          match(stmt) :
+            (stmt:PkgDirsStmt) :
+              val path-strings = for path in paths(stmt) seq :
+                val str = to-string(relative-to-dir(location(config), path))
+                Indented("\n" % [str])
+              print(o, "pkg-dirs = (%*)" % [path-strings])
+            (stmt:ProjFilesStmt) :
+              val path-strings = for path in paths(stmt) seq :
+                val str = to-string(relative-to-dir(location(config), path))
+                Indented("\n%~" % [str])
+              print(o, "proj-files = (%*)" % [path-strings])
+            (stmt) :
+              false
+    ;Print it out to the config file.
+    val filename = relative-to(config-dir, ".stanza")
+    spit(sys, filename, data, true)

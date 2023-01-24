@@ -64,12 +64,18 @@ public defn installed? (state:SystemState, v:NamedVersion) -> True|False :
 
 ;Returns the active Stanza version in effect.
 public defn active-version (state:SystemState) -> VersionSpecifier|False :
-  label<VersionSpecifier|False> return :
+  match(active-config(state)) :
+    (c:ConfigFile) : version(c)
+    (f:False) : false
+
+;Returns the active Stanza configuration in effect.
+public defn active-config (state:SystemState) -> ConfigFile|False :
+  label<ConfigFile|False> return :
     match(project-config(state)) :
-      (c:ConfigFile) : return(version(c))
+      (c:ConfigFile) : return(c)
       (f:False) : false
     match(global-config(state)) :
-      (c:ConfigFile) : return(version(c))
+      (c:ConfigFile) : return(c)
       (f:False) : false
 
 ;============================================================

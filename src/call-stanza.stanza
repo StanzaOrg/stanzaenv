@@ -8,6 +8,7 @@ defpackage stanzaenv/call-stanza :
   import stanzaenv/system-path
   import stanzaenv/errors
   import stanzaenv/gen-dotstanza
+  import stanzaenv/config
   
 public defn call-stanza (sys:System,
                          args:Tuple<String>,
@@ -27,7 +28,7 @@ public defn call-stanza (sys:System,
     ;Ensure that the DotStanza configuration file exists.
     val config-dir = generate-dotstanza-config(
                        sys,
-                       install-path(sys),
+                       install-path(system-state),
                        stanza-dir,
                        active-config(system-state) as ConfigFile)
     ;Launch Stanza with the appropriate STANZA_CONFIG.
