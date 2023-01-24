@@ -13,6 +13,7 @@ defpackage stanzaenv/install :
   import stanzaenv/install-version
   import stanzaenv/versions
   import stanzaenv/set-version
+  import stanzaenv/shims
 
 ;Main entry point: Install the 'stanzaenv' system.
 ;Will detect whether already installed.
@@ -40,19 +41,11 @@ defn fresh-install (sys:System) -> False :
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
     move-dir(sys, relative-to(temp, "stanzaenv"), path(install-dir))
     set-executable(sys, stanzaenv-exe-path(path(install-dir)))
-    create-shims(sys, path(install-dir))
+    create-shim(sys, path(install-dir), "stanza")
     println("Successfully installed stanzaenv to '%_'." % [path(install-dir)])
   initialize-system-path(sys, install-dir)
   initialize-stanzaenv-env-var(sys, install-dir)
   install-initial-stanza-version(sys, install-dir)
-
-;Create the shim executables.
-defn create-shims (sys:System, root:String) -> False :
-  val stanzaenv-exe = stanzaenv-exe-path(root)
-  val shim-paths = shim-paths(root)
-  for shim in shim-paths do :
-    copy-file(sys, stanzaenv-exe, shim)
-    set-executable(sys, shim)
 
 ;Print out a message indicating that stanzaenv is already installed.
 defn report-already-installed (install:EnvInstallation) -> False :

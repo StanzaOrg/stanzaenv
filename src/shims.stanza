@@ -2,7 +2,9 @@ defpackage stanzaenv/shims :
   import core
   import collections
   import stanzaenv/system-api
+  import stanzaenv/system-state
   import stanzaenv/paths
+  import stanzaenv/config
 
 ;Delete all the shims in the bin directory except for the default shims.
 public defn clear-shims (sys:System, root:String) -> False :
