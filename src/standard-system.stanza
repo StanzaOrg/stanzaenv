@@ -35,13 +35,15 @@ public defn StandardSystem () -> StandardSystem :
   new StandardSystem :
     defmethod get-registry (this, key:String, value:String) :
       #if-defined(PLATFORM-WINDOWS) :
-        stanzaenv/windows-registry/windows-get-registry(HKEY-CURRENT-USER, key, value)
+        val current-user = stanzaenv/windows-registry/HKEY-CURRENT-USER
+        stanzaenv/windows-registry/windows-get-registry(current-user, key, value)
       #else :
         fatal("Registry is not supported on this platform.")
 
     defmethod set-registry (this, key:String, value:String, data:String) :
       #if-defined(PLATFORM-WINDOWS) :
-        stanzaenv/windows-registry/windows-set-registry(HKEY-CURRENT-USER, key, value, data)
+        val current-user = stanzaenv/windows-registry/HKEY-CURRENT-USER
+        stanzaenv/windows-registry/windows-set-registry(current-user, key, value, data)
       #else :
         fatal("Registry is not supported on this platform.")
 

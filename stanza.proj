@@ -32,4 +32,10 @@ build stanzaenv-osx :
   s: "build/stanzaenv-osx.s"
   pkg: "build/pkgs"
 
+build stanzaenv-windows :
+  inputs: stanzaenv/main
+  o: "build/stanzaenv-windows"
+  s: "build/stanzaenv-windows.s"
+  pkg: "build/wpkgs"
+
 foreign-package-params(conan) : ()
