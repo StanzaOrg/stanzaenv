@@ -18,10 +18,7 @@ package zip requires :
     "libzip/1.8.0"
 
 package stanzaenv/sysutils requires :
-  dynamic-library: "libsysutils.dylib"
-  ccflags: 
-    "-L{.}/bin/dylibs"
-    "-lsysutils"
+  dynamic-library: "libsysutils.dylib"    
 
 dynamic-library-dirs :
   "bin/dylibs"
@@ -37,5 +34,3 @@ build stanzaenv-windows :
   o: "build/stanzaenv-windows"
   s: "build/stanzaenv-windows.s"
   pkg: "build/wpkgs"
-
-foreign-package-params(conan) : ()
