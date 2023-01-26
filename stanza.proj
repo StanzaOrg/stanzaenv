@@ -1,36 +1,11 @@
 include "src/lib-curl/stanza.proj"
-include "src/lib-zip/stanza.proj"
+
 packages stanzaenv/* defined-in "src"
 
-package stanzaenv/windows-registry requires :
-  dynamic-library: "windows-registry.dll"
-
 package curl requires :
-  dynamic-library: "libcurlbindings.dylib"  
   foreign-packages(conan) :
     "libcurl/7.86.0"
     "openssl/1.1.1s"
   ccfiles: "src/lib-curl/curl.c"
-    
-package zip requires :
-  dynamic-library: "libzip.5.5.dylib"
-  foreign-packages(conan) :
-    "libzip/1.8.0"
 
-package stanzaenv/sysutils requires :
-  dynamic-library: "libsysutils.dylib"    
-
-dynamic-library-dirs :
-  "bin/dylibs"
-
-build stanzaenv-osx :
-  inputs: stanzaenv/main
-  o: "build/stanzaenv-osx"
-  s: "build/stanzaenv-osx.s"
-  pkg: "build/pkgs"
-
-build stanzaenv-windows :
-  inputs: stanzaenv/main
-  o: "build/stanzaenv-windows"
-  s: "build/stanzaenv-windows.s"
-  pkg: "build/wpkgs"
+foreign-package-params(conan) : ()

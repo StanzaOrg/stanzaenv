@@ -1,2 +1,0 @@
-defpackage stanzaenv/current-version
-public val CURRENT-VERSION = [0, 0, 1]

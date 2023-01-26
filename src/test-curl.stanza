@@ -1,0 +1,12 @@
+defpackage stanzaenv/test-curl :
+  import core
+  import collections
+  import curl
+
+defn main () :
+  val curl = Curl()
+  val url = "http://www.google.com"
+  val code = read-url-to-file(curl, [], url, "test.txt")
+  println("response code = %_" % [code])
+
+main()

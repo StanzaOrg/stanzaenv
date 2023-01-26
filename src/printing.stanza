@@ -1,7 +1,0 @@
-defpackage stanzaenv/printing :
-  import core
-  import line-wrap
-
-public defn paragraph (msg) :
-  println(LineWrapped(msg))
-  println("")
