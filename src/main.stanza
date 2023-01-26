@@ -46,7 +46,7 @@ val VERSION-MSG =
 ;current version spliced in.
 defn version-message () -> String :
   val [a b c] = stanzaenv/current-version/CURRENT-VERSION
-  println(VERSION-MSG % [a, b, c])  
+  to-string(VERSION-MSG % [a, b, c])
 
 new-command $ Command(
   "version"
@@ -289,7 +289,7 @@ defn main () :
     (mode:MainMode) : 
       within with-requested-exit() :
         simple-command-line-cli(
-          version-msg(),
+          version-message(),
           to-tuple(ENV-ACTIONS),
           "help",
           true)

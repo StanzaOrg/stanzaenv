@@ -4,23 +4,24 @@ packages stanzaenv/* defined-in "src"
 
 foreign-package-params(conan) :
   conan-install-extra-args:
-    "--build"
-    "never"
-    "-s"
-    "compiler=gcc"
-    "-s"
-    "compiler.version=11.2"
-    "-s"
-    "compiler.exception=seh"
-    "-s"
-    "compiler.threads=posix"
-    "-o"
-    "libcurl:with_unix_sockets=False"
-    "-o"
-    "libcurl:with_ssl=schannel"
+    on-platform :
+      windows:
+        "--build" "never"
+        "-s" "compiler=gcc"
+        "-s" "compiler.version=11.2"
+        "-s" "compiler.exception=seh"
+        "-s" "compiler.threads=posix"
+        "-o" "libcurl:with_unix_sockets=False"
+        "-o" "libcurl:with_ssl=schannel"
+      else :
+        "--build" "missing"
   conan-remotes:
-    {name: "jitx-conan-remote", value: "http://ec2-44-226-24-141.us-west-2.compute.amazonaws.com:9300"}
-    {name: "conancenter", value: "https://center.conan.io"}
+    on-platform:
+      windows :
+        {name: "jitx-conan-remote", value: "http://ec2-44-226-24-141.us-west-2.compute.amazonaws.com:9300"}
+        {name: "conancenter", value: "https://center.conan.io"}
+      else : 
+        {name: "conancenter", value: "https://center.conan.io"}
 
 package stanzaenv/windows-registry requires :
   dynamic-library: "windows-registry.dll"
