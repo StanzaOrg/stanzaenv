@@ -1,24 +1,46 @@
-include "src/lib-curl/stanza.proj"
+include "src/lib-curl/stanza.proj" 
 include "src/lib-zip/stanza.proj"
 packages stanzaenv/* defined-in "src"
 
+foreign-package-params(conan) :
+  conan-install-extra-args:
+    "--build"
+    "never"
+    "-s"
+    "compiler=gcc"
+    "-s"
+    "compiler.version=11.2"
+    "-s"
+    "compiler.exception=seh"
+    "-s"
+    "compiler.threads=posix"
+    "-o"
+    "libcurl:with_unix_sockets=False"
+    "-o"
+    "libcurl:with_ssl=schannel"
+  conan-remotes:
+    {name: "jitx-conan-remote", value: "http://ec2-44-226-24-141.us-west-2.compute.amazonaws.com:9300"}
+    {name: "conancenter", value: "https://center.conan.io"}
+
 package stanzaenv/windows-registry requires :
   dynamic-library: "windows-registry.dll"
+  ccfiles: "src/windows-registry.c"
 
 package curl requires :
-  dynamic-library: "libcurlbindings.dylib"  
+  dynamic-library: "libcurlbindings.dylib"
   foreign-packages(conan) :
-    "libcurl/7.86.0"
-    "openssl/1.1.1s"
+    "libcurl/7.82.0"
+    "openssl/1.1.1o"
+    "zlib/1.2.12"
   ccfiles: "src/lib-curl/curl.c"
-    
+
 package zip requires :
   dynamic-library: "libzip.5.5.dylib"
   foreign-packages(conan) :
     "libzip/1.8.0"
 
 package stanzaenv/sysutils requires :
-  dynamic-library: "libsysutils.dylib"    
+  dynamic-library: "libsysutils.dylib"
 
 dynamic-library-dirs :
   "bin/dylibs"
