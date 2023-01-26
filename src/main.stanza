@@ -42,6 +42,12 @@ val VERSION-MSG =
                  Version %_.%_.%_
 <STR>
 
+;Retrieve the VERSION-MSG template with the
+;current version spliced in.
+defn version-message () -> String :
+  val [a b c] = stanzaenv/current-version/CURRENT-VERSION
+  println(VERSION-MSG % [a, b, c])  
+
 new-command $ Command(
   "version"
   ZeroArg, false
@@ -49,8 +55,7 @@ new-command $ Command(
   "Displays the Stanzaenv version."
   false
   fn (cmd-args) :
-    val [a b c] = stanzaenv/current-version/CURRENT-VERSION
-    println(VERSION-MSG % [a, b, c])
+    println(version-message())
 )
 
 ;============================================================
@@ -284,7 +289,7 @@ defn main () :
     (mode:MainMode) : 
       within with-requested-exit() :
         simple-command-line-cli(
-          VERSION-MSG,
+          version-msg(),
           to-tuple(ENV-ACTIONS),
           "help",
           true)

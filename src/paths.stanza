@@ -13,11 +13,19 @@ public defn project-config-file () -> String :
 ;1) First try $HOME/.stanzaenv
 ;2) Then try C:/Program Files/stanzaenv if on Windows.
 public defn default-installation-dir (sys:System) -> String|False :
-  val home = get-env(sys, "HOME")
-  match(home:String) :
-    match(resolve-path(sys,home)) :
-      (fullhome:String) : relative-to(fullhome, ".stanzaenv")
-      (f:False) : false
+  switch(current-platform(sys)) :
+    Windows :
+      val appdata = get-env(sys, "LOCALAPPDATA")
+      match(appdata:String) :
+        match(resolve-path(sys,appdata)) :
+          (fullappdata:String) : relative-to(fullappdata, "stanzaenv")
+          (f:False) : false
+    else :
+      val home = get-env(sys, "HOME")
+      match(home:String) :
+        match(resolve-path(sys,home)) :
+          (fullhome:String) : relative-to(fullhome, ".stanzaenv")
+          (f:False) : false
 
 ;Return the default files in the bin directory.
 public defn default-bin-files (sys:System) -> Tuple<String> :
