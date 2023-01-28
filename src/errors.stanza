@@ -195,6 +195,20 @@ public defstruct NoExtension <: StanzaEnvError :
 defmethod print (o:OutputStream, e:NoExtension) :
   print(o, "There is no extended Stanza version called %~ in the current project." % [name(e)])
 
+;Occurs when we could not extract the program name from the given path.
+public defstruct ExtractExeNameError <: StanzaEnvError :
+  path:String
+
+defmethod print (o:OutputStream, e:ExtractExeNameError) :
+  print(o, "Could not extract the program name from the path %~." % [path(e)])
+
+;Occurs when we cannot successfully determine the launch mode of the main executable.
+public defstruct LaunchModeError <: StanzaEnvError :
+  error:Exception
+
+defmethod print (o:OutputStream, e:LaunchModeError) :
+  print(o, "Could not determine the 'stanzaenv' launch mode. %_" % [error(e)])
+
 ;Helper utility for wrapping a body and wrapping up any thrown exception.
 public defn wrap-error<?T> (body:() -> ?T, Error:Exception -> Exception) -> T :
   try : body()

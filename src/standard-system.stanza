@@ -9,6 +9,7 @@ defpackage stanzaenv/standard-system :
   import stanzaenv/debugenv
   import stanzaenv/mock-prompter
   import stanzaenv/printing
+  import stanzaenv/paths
 
 ;============================================================
 ;==================== Debugging Intercepts ==================
@@ -151,8 +152,19 @@ public defn StandardSystem () -> StandardSystem :
                            workdir:String|False,
                            env-vars:Tuple<KeyValue<String,String>>|False) ->
                            [Int, String] :
-      val buffer = StringBuffer()
-      val proc = Process(file, args, STANDARD-IN, PROCESS-OUT, PROCESS-OUT, workdir, env-vars)
+                           
+      ;Correct the path to the file, if workdir is supplied.
+      ;'file' is relative to 'workdir' if 'workdir' is supplied.
+      ;On Windows, the Process API requires the 'file' to be relative to the current workdir.
+      val exe-file =
+        #if-defined(PLATFORM-WINDOWS) :
+          match(workdir:String) : relative-to(workdir, file)
+          else : file
+        #else :
+          file
+      
+      val buffer = StringBuffer()      
+      val proc = Process(exe-file, args, STANDARD-IN, PROCESS-OUT, PROCESS-OUT, workdir, env-vars)
       val proc-out = output-stream(proc)
       let loop () :
         val c = get-char(proc-out)
@@ -168,4 +180,7 @@ public defn StandardSystem () -> StandardSystem :
     defmethod replace-current-process (this,
                                        file:String,
                                        args:Tuple<String>) -> False :
-      replace-current-process(file, args)
+      #if-defined(PLATFORM-WINDOWS) :
+        exit(call-system(file, args))
+      #else :
+        replace-current-process(file, args)

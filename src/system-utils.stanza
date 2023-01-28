@@ -1,8 +1,10 @@
 defpackage stanzaenv/system-utils :
   import core
   import collections
+  import core/parsed-path
   import stanzaenv/system-api
   import stanzaenv/printing
+  import stanzaenv/errors
 
 ;============================================================
 ;==================== Path Resolution =======================
@@ -25,6 +27,18 @@ public defn strip-exe? (s:String) -> String :
     s[0 to n1 - n2]
   else :
     s
+
+;Retrieve the executable name given the path.
+;If strip-extension? is true, then remove the .exe at the end.
+public defn exe-name (path:String, strip-extension?:True|False) -> String :
+  val parsed = parse-path(path)
+  val n = length(entries(parsed))
+  val e = entries(parsed)[n - 1]
+  match(e:NamedPath) :
+    if strip-extension? : strip-exe?(name(e))
+    else : name(e)
+  else :
+    throw(ExtractExeNameError(path))    
 
 ;============================================================
 ;===================== Temp Directories =====================

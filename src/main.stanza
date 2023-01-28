@@ -2,6 +2,7 @@ defpackage stanzaenv/main :
   import core
   import collections
   import arg-parser
+  import stanzaenv/errors
   import stanzaenv/system-api
   import stanzaenv/system-utils
   import stanzaenv/standard-system
@@ -258,15 +259,16 @@ defstruct MainMode <: LaunchMode
 
 ;Retrieve the launch mode for the program.
 defn launch-mode () -> LaunchMode :
-  val args = command-line-arguments()
-  if empty?(args) :
-    MainMode()
-  else :
-    val arg0 = strip-exe?(args[0])
-    if suffix?(arg0, "stanzaenv") :
+  within wrap-error(LaunchModeError) :
+    val args = command-line-arguments()
+    if empty?(args) :
       MainMode()
     else :
-      ShimMode(arg0)
+      val arg0 = exe-name(args[0], true)
+      if suffix?(arg0, "stanzaenv") :
+        MainMode()
+      else :
+        ShimMode(arg0)
 
 ;============================================================
 ;======================== Launch ============================
@@ -275,6 +277,7 @@ defn launch-mode () -> LaunchMode :
 defn main () :
   match(launch-mode()) :
     (mode:ShimMode) :
+      println("Execute in shim mode: %~" % [name(mode)])
       try :
         val [sys, state] = initialize-system()
         val extension = name(mode) when name(mode) != "stanza"
