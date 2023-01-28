@@ -3,6 +3,14 @@ include "src/lib-zip/stanza.proj"
 packages stanzaenv/* defined-in "src"
 
 foreign-package-params(conan) :
+  conan-build-dir:
+    on-platform:
+      linux: "lbuild"
+      else: "build"
+  conan-cache-dir :
+    on-platform:
+      linux: "lconan"
+      else: "."
   conan-install-extra-args:
     on-platform :
       windows:
@@ -51,6 +59,12 @@ build stanzaenv-osx :
   o: "build/stanzaenv-osx"
   s: "build/stanzaenv-osx.s"
   pkg: "build/pkgs"
+
+build stanzaenv-linux :
+  inputs: stanzaenv/main
+  o: "build/stanzaenv-linux"
+  s: "build/stanzaenv-linux.s"
+  pkg: "build/lpkgs"
 
 build stanzaenv-windows :
   inputs: stanzaenv/main
