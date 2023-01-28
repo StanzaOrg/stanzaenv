@@ -9,6 +9,7 @@ defpackage stanzaenv/harness :
   import stanzaenv/system-state
   import stanzaenv/read-state
   import stanzaenv/install
+  import stanzaenv/install-version
   import stanzaenv/system-api
   import stanzaenv/versions
   import stanzaenv/set-version
@@ -443,6 +444,30 @@ defn try-install-3 () :
     
   install-stanzaenv(sys)
 
+;Windows: Tries to install Stanza at the end.
+defn try-install-4 () :
+  val sys = MockSystem(
+    ;env vars
+    ["SHELL" => "power-shell"
+     "HOME" => "/users/patricksli"]
+    
+    ;existing files
+    ["/Applications/"]
+    
+    ;working directory
+    "/users"
+    
+    ;prompts
+    ["installed in" => "tempinstall"
+     "system PATH" => "yes"
+     "STANZAENV_DIR" => "yes"
+     "initial version of Stanza" => "0.17.52"]
+
+    ;platform
+    Windows)
+    
+  install-stanza-version(sys, NamedVersion([0 17 50]), "myworkdir")
+
 ;============================================================
 ;================== Try parsing config file =================
 ;============================================================
@@ -768,6 +793,8 @@ within (package,sig) = set-stack-trace-filter() :
 ;try-install-2()
 ;println("try-install-3")
 ;try-install-3()
+;println("try-install-4")
+try-install-4()
 ;println("try-parse-config-1")
 ;try-parse-config-1()
 ;println("try-parse-config-2")
