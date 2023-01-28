@@ -6,6 +6,10 @@ defpackage stanzaenv/unzip :
   
 public defn unzip-to-dir (zipfile:String, dirpath:String) -> False :
   try :
-    extract(ZipArchive(zipfile), dirpath)
+    val archive = ZipArchive(zipfile)
+    try :
+      extract(archive, dirpath)
+    finally :
+      close(archive)
   catch (e:ZipError|IOException) :
     throw(UnzipError(zipfile))
