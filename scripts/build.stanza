@@ -53,7 +53,7 @@ defn create-zip (exe-path:String, name:String, platform:Platform) :
     copy-file(exe-path, fillname("build/staging/$NAME/bin/stanzaenv"))  
 
   ;Zip the archive.
-  val zipfile = to-string("%_/build/outputs/$NAME.zip" % [cwd])
+  val zipfile = to-string(fillname("%_/build/outputs/$NAME.zip") % [cwd])
   ret0! $ call-system("zip",
                       ["zip" "-r" zipfile "."]
                       fillname("build/staging/$NAME")
