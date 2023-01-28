@@ -180,6 +180,9 @@ public defn StandardSystem () -> StandardSystem :
     defmethod replace-current-process (this,
                                        file:String,
                                        args:Tuple<String>) -> False :
+      ;Workaround for Windows: The replace-current-process utility on Windows
+      ;does not properly redirect STDIN/STDOUT. The end result is that 'stanza repl'
+      ;behaves very strangely. 
       #if-defined(PLATFORM-WINDOWS) :
         exit(call-system(file, args))
       #else :

@@ -277,7 +277,6 @@ defn launch-mode () -> LaunchMode :
 defn main () :
   match(launch-mode()) :
     (mode:ShimMode) :
-      println("Execute in shim mode: %~" % [name(mode)])
       try :
         val [sys, state] = initialize-system()
         val extension = name(mode) when name(mode) != "stanza"
