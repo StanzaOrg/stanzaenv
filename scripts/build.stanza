@@ -43,14 +43,14 @@ defn create-zip (exe-path:String, name:String, platform:Platform) :
   val cwd = resolve-path!(".")
 
   ;Helper: Fill in the name.
-  defn fillname (template:String) : replace(template, "$NAME", name)
+  defn fillname (template:String) :
+    val exesuffix = ".exe" when platform == Windows else ""
+    template $> replace{_, "$NAME", name}
+             $> replace{_, "$EXE", exesuffix}
   
   ;Create a reflection of the zip tree in build/staging
   create-dir-recursive(fillname("build/staging/$NAME/bin"))
-  if platform == Windows :
-    copy-file(exe-path, fillname("build/staging/$NAME/bin/stanzaenv.exe"))
-  else :
-    copy-file(exe-path, fillname("build/staging/$NAME/bin/stanzaenv"))  
+  copy-file(exe-path, fillname("build/staging/$NAME/bin/stanzaenv$EXE"))  
 
   ;Zip the archive.
   val zipfile = to-string(fillname("%_/build/outputs/$NAME.zip") % [cwd])
@@ -58,6 +58,8 @@ defn create-zip (exe-path:String, name:String, platform:Platform) :
                       ["zip" "-r" zipfile "."]
                       fillname("build/staging/$NAME")
                       false)  
+
+  copy-file(exe-path, fillname("build/outputs/$NAME$EXE"))
 
 ;============================================================
 ;================= Build and Zip Stanzaenv ==================

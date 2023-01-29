@@ -35,3 +35,15 @@ STANZA_EXPORTED_SYMBOL char* windows_get_registry (uint64_t key, char* sub_key, 
 STANZA_EXPORTED_SYMBOL uint32_t windows_set_registry (uint64_t key, char* sub_key, char* value, char* data, uint64_t num_bytes) {
   return RegSetKeyValueA((HKEY)key, sub_key, value, REG_SZ, data, (DWORD)num_bytes);
 }
+
+//Broadcast to the rest of Windows system that environment variables have changed.
+STANZA_EXPORTED_SYMBOL void windows_broadcast_env_change () {
+  SendMessageTimeoutA(
+    HWND_BROADCAST,
+    WM_SETTINGCHANGE,
+    0,
+    (LPARAM)"Environment",
+    SMTO_BLOCK,
+    100,
+    NULL);
+}

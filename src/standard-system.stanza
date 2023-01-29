@@ -45,6 +45,7 @@ public defn StandardSystem () -> StandardSystem :
       #if-defined(PLATFORM-WINDOWS) :
         val current-user = stanzaenv/windows-registry/HKEY-CURRENT-USER
         stanzaenv/windows-registry/windows-set-registry(current-user, key, value, data)
+        stanzaenv/windows-registry/windows-broadcast-env-change()
       #else :
         fatal("Registry is not supported on this platform.")
 

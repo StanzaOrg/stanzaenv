@@ -8,6 +8,7 @@ defpackage stanzaenv/windows-registry :
 
 extern windows_get_registry: (long, ptr<byte>, ptr<byte>) -> ptr<byte>
 extern windows_set_registry: (long, ptr<byte>, ptr<byte>, ptr<byte>, long) -> int
+extern windows_broadcast_env_change: () -> int
 
 ;============================================================
 ;======================== Wrappers ==========================
@@ -28,6 +29,11 @@ public lostanza defn windows-set-registry (key:ref<Long>, subkey:ref<String>, va
   val result = call-c windows_set_registry(key.value, addr!(subkey.chars), addr!(value.chars), addr!(data.chars), data.length)
   if result :
     throw(Exception(core/windows-error-msg()))
+  return false
+
+;Broadcast the environment change to Windows.
+public lostanza defn windows-broadcast-env-change () -> ref<False> :
+  call-c windows_broadcast_env_change()
   return false
 
 ;============================================================
