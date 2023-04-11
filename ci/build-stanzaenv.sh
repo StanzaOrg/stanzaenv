@@ -24,6 +24,7 @@ export CONAN_USER_HOME
 
 # Calculated env vars
 STANZADIR=$(grep ^install-dir $STANZA_CONFIG/.stanza | cut -f2 -d\")
+STANZA="${STANZADIR}/stanza"
 
 PLATFORM_DESC="unknown"
 case "$STANZA_BUILD_PLATFORM" in
@@ -82,7 +83,7 @@ esac
 cd "${REPODIR}"
 echo "Building stanzaenv version ${VER} in ${PWD}"
 
-stanza build stanzaenv-${STANZAENV_BUILD_PLATFORM} -verbose
+${STANZA} build stanzaenv-${STANZAENV_BUILD_PLATFORM} -verbose
 
 ls -l build/stanzaenv-${STANZAENV_BUILD_PLATFORM}
 
