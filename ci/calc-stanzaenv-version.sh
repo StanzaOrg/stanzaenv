@@ -7,9 +7,9 @@ PS4='>>> '
 # Given MAJ.MIN.PAT-TAG.SUF  such as  1.2.34-rc.56
 
 # Number of digits for PAT and SUF should be no more than 2 digits
-# For branch "master"
+# For branch "main"
 #   the TAG part of the semver should be "rc"
-# For any other master
+# For any other branch
 #   the TAG part of the semver should be the branch name
 #   and the MAJ digit should be zero
 
@@ -38,8 +38,8 @@ SUF=$(echo $SEMVER | cut -d. -f4)
 
 STANZA_VERSION=$(printf "%d.%d.%d-%s.%d" "$MAJ" "$MIN" "$PAT" "$TAG" "$SUF")
 
-# If the branch is "master"
-if [[ "${BRANCH}" == "master" ]] ; then
+# If the branch is "main"
+if [[ "${BRANCH}" == "main" ]] ; then
   # and the semver is a final release version 1.2.34
   if [[ "${SEMVER}" == "${MAJ}.${MIN}.${PAT}" ]] ; then
     # output the version unchanged

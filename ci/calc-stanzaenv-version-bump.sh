@@ -10,7 +10,7 @@ TOP="${PWD}"
 >&2 echo "            BRANCH:" "${BRANCH:?Usage: BRANCH=foo $0}"
 
 # Defaulted env var inputs - can override if necessary
->&2 echo "           REPODIR:" "${REPODIR:=lbstanza}"
+>&2 echo "           REPODIR:" "${REPODIR:=stanzaenv}"
 ## By default, get the most recent previous tag on this branch from git
 ### note: if multiple tags exist on one commit, git doesn't always desecribe the most recent one
 ###    ### maybe use: git tag --sort=committerdate --contains HEAD~ | tail -1
@@ -37,8 +37,8 @@ else
     ## By default, bump the prerelease version using the branch name
     ##   note the two dots after branch name are intentional
     BRANCH_OR_RC="${BRANCH}"
-    if [[ "${BRANCH}" == "master" ]] ; then
-        # if the branch is "master", use the prerelease label "rc"
+    if [[ "${BRANCH}" == "main" ]] ; then
+        # if the branch is "main", use the prerelease label "rc"
         BRANCH_OR_RC="rc"
     fi
     >&2 echo "              BUMP:" "${BUMP:=prerel ${BRANCH_OR_RC}..}"
