@@ -89,36 +89,7 @@ ls -l build/stanzaenv-${STANZAENV_BUILD_PLATFORM}
 
 
 if [ "$CREATE_PACKAGE" == "true" ] ; then
-  #VERU=${VER//./_}  # convert dots to underscores
-  STANZA_EXT=""
-  [[ "${STANZA_PLATFORMCHAR}" == "w" ]] && STANZA_EXT=".exe"
-
-  FILES="docs \
-         bin \
-         include \
-         ${STANZA_PLATFORMCHAR}pkgs \
-         ${STANZA_PLATFORMCHAR}stanza${STANZA_EXT} \
-         core \
-         compiler \
-         examples \
-         runtime \
-         stanza.proj \
-         License.txt \
-         ChangeLog.txt"
-
-  mkdir -p ziptmp/build
-  cp -r ${FILES} ziptmp/
-
-  cd ziptmp
-
-  # rename "lstanza" to "stanza" and "wstanza.exe" to "stanza.exe"
-  [[ "${STANZA_PLATFORMCHAR}stanzaenv" != "stanzaenv" ]] \
-      && mv ${STANZA_PLATFORMCHAR}stanzaenv${STANZA_EXT} stanzaenv${STANZA_EXT} \
-      && mv ${STANZA_PLATFORMCHAR}pkgs pkgs
-
-  #zip -r ../${STANZA_PLATFORMCHAR}stanza_${VERU}.zip *
-  zip -r ../stanza-${PLATFORM_DESC}_${VER}.zip *
-
+  stanza run scripts/build.stanza -- zip-all
 fi
 
 # if [ "$CREATE_ARCHIVE" == "true" ] ; then
