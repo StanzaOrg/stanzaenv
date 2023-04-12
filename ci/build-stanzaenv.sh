@@ -89,7 +89,7 @@ ls -l build/stanzaenv-${STANZAENV_BUILD_PLATFORM}
 
 
 if [ "$CREATE_PACKAGE" == "true" ] ; then
-  stanza run scripts/build.stanza -- zip-all
+  ${STANZA} run scripts/build.stanza -- zip-all
 fi
 
 # if [ "$CREATE_ARCHIVE" == "true" ] ; then
