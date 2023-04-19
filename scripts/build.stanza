@@ -111,7 +111,7 @@ val BUILD-COMMAND = Command(
         call-system!([stanza-path "build" "stanzaenv-linux"])
         create-zip("build/stanzaenv-linux", "stanzaenv-linux", Linux)
       "windows" :
-        call-system!([stanza-path "build" "stanzaenv-windows"])
+        call-system!([stanza-path "build" "stanzaenv-windows" "-verbose"])
         create-zip("build/stanzaenv-windows", "stanzaenv-windows", Windows)
       else :
         throw(Exception("Invalid platform: %~." % [cmd-args["platform"]]))
