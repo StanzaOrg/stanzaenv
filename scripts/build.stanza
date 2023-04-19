@@ -8,14 +8,23 @@ defpackage build :
 ;============================================================
 
 ;Clean and reset the build folder.
+;Creates the following structure:
+;  build/
+;    outputs/
+;    staging/
+;      stanzaenv-os-x/
+
 defn reset-build-folder () :
   delete-recursive("build")
   val paths = [
     "build/outputs"
-    "build/staging/stanzaenv-osx"]
+    "build/staging/stanzaenv-os-x"]
   do(create-dir-recursive, paths)
 
 ;Reset the output and staging folders.
+;Clears these folders:
+;  build/outputs/
+;  build/staging/
 defn reset-output-and-staging-folders () :
   val paths = [
     "build/outputs"
@@ -24,20 +33,35 @@ defn reset-output-and-staging-folders () :
     delete-recursive(path) when file-exists?(path)
     create-dir-recursive(path)
 
+;============================================================
+;===================== Tiny Utilities =======================
+;============================================================
+
 ;Exits the program if return value is not zero.
 defn ret0! (res:Int) :
   if res != 0 :
     exit(res)
 
 ;Call the system and exit on failure.
-defn call-system! (args:Tuple<String>) :
-  ret0! $ call-system(args)
+defn call-system! (args:Tuple<String> --
+                   working-dir:String|False = false) :
+  ret0! $ call-system(args, working-dir, false)
 
 ;============================================================
 ;==================== Create Zip File =======================
 ;============================================================
 
-;E.g. create-zip("build/staging/stanzaenv-osx", "stanzaenv-osx")
+;E.g. create-zip("build/staging/stanzaenv-os-x", "stanzaenv-os-x", OS-X)
+;
+;Populates this folder properly:
+;
+;  build/staging/stanzaenv-os-x
+;
+;And zips up that folder to create:
+;
+;  build/outputs/stanzaenv-os-x.zip
+;  build/outputs/stanzaenv-os-x
+
 defn create-zip (exe-path:String, name:String, platform:Platform) :
   ;Get the current working directory.
   val cwd = resolve-path!(".")
@@ -52,13 +76,11 @@ defn create-zip (exe-path:String, name:String, platform:Platform) :
   create-dir-recursive(fillname("build/staging/$NAME/bin"))
   copy-file(exe-path, fillname("build/staging/$NAME/bin/stanzaenv$EXE"))  
 
-  ;Zip the archive.
+  ;Zip up the archive.
   val zipfile = to-string(fillname("%_/build/outputs/$NAME.zip") % [cwd])
-  ret0! $ call-system("zip",
-                      ["zip" "-r" zipfile "."]
-                      fillname("build/staging/$NAME")
-                      false)  
+  call-system!(["zip" "-r" zipfile "."], working-dir = fillname("build/staging/$NAME"))
 
+  ;Copy the exe path to the right place.
   copy-file(exe-path, fillname("build/outputs/$NAME$EXE"))
 
 ;============================================================
@@ -66,57 +88,36 @@ defn create-zip (exe-path:String, name:String, platform:Platform) :
 ;============================================================
 
 val BUILD-COMMAND = Command(
-  "build"
-  ZeroArg, false,
-  [],
-  "Builds Stanzaenv."
-  false,
-  fn (cmd-args) :
+  name = "build"  
+  description = "Builds Stanzaenv."
+  
+  action = fn (cmd-args) :
 
     ;Get the current working directory.
     val cwd = resolve-path!(".")
 
     ;Reset the build folder.
-    ;reset-build-folder()
+    reset-build-folder()
 
-    ;Build the main program.
-    call-system!(["stanza" "build" "stanzaenv-osx"])
-
-    ;Create the zip file.
-    create-zip("build/stanzaenv-osx", "stanzaenv-osx", OS-X)
-)
-
-;============================================================
-;=================== Zip all Files ==========================
-;============================================================
-
-val ZIP-ALL-COMMAND = Command(
-  "zip-all"
-  ZeroArg, false,
-  [],
-  "Builds Stanzaenv."
-  false,
-  fn (cmd-args) :
-
-    ;Get the current working directory.
-    val cwd = resolve-path!(".")
-
-    ;Reset the output and staging folders.
-    reset-output-and-staging-folders()
-
-    ;Create the zip file.
-    create-zip("build/stanzaenv-osx", "stanzaenv-osx", OS-X)
-    create-zip("build/stanzaenv-linux", "stanzaenv-linux", Linux)
-    create-zip("/Users/patricksli/Dropbox/Transfer/stanzaenv-windows.exe", "stanzaenv-windows", Windows)
-)
+    ;Dependency upon platform.
+    switch(cmd-args["platform"]) :
+      "os-x" :
+        call-system!(["stanza" "build" "stanzaenv-os-x"])
+        create-zip("build/stanzaenv-os-x", "stanzaenv-os-x", OS-X)
+      "linux" :
+        call-system!(["stanza" "build" "stanzaenv-linux"])
+        create-zip("build/stanzaenv-linux", "stanzaenv-linux", Linux)
+      "windows" :
+        call-system!(["stanza" "build" "stanzaenv-windows"])
+        create-zip("/Users/patricksli/Dropbox/Transfer/stanzaenv-windows.exe", "stanzaenv-windows", Windows)
+      else :
+        throw(Exception("Invalid platform: %~." % [cmd-args["platform"]]))
+    
+  ;Flags
+  Flag("platform", type = OneFlag))
 
 ;============================================================
 ;======================= Launch! ============================
 ;============================================================
 
-simple-command-line-cli(
-  false,
-  [BUILD-COMMAND
-   ZIP-ALL-COMMAND]
-  "build"
-  true)
+simple-command-line-cli(BUILD-COMMAND)
