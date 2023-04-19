@@ -36,7 +36,7 @@ case "$STANZA_BUILD_PLATFORM" in
     ;;
     Darwin | mac* | os-x)
         STANZA_BUILD_PLATFORM=os-x
-        STANZAENV_BUILD_PLATFORM=osx
+        STANZAENV_BUILD_PLATFORM=os-x
         STANZA_PLATFORMCHAR=""
         PLATFORM_DESC="macos-unknown"
         case "$(sw_vers -productVersion)" in
