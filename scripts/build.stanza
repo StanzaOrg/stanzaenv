@@ -37,15 +37,12 @@ defn reset-output-and-staging-folders () :
 ;===================== Tiny Utilities =======================
 ;============================================================
 
-;Exits the program if return value is not zero.
-defn ret0! (res:Int) :
-  if res != 0 :
-    exit(res)
-
 ;Call the system and exit on failure.
 defn call-system! (args:Tuple<String> --
                    working-dir:String|False = false) :
-  ret0! $ call-system(args, working-dir, false)
+  val result = call-system(args, working-dir, false)
+  if result != 0 :
+    fatal("call-system %_ failed with exit code %_." % [args, result])
 
 ;============================================================
 ;==================== Create Zip File =======================
@@ -112,7 +109,7 @@ val BUILD-COMMAND = Command(
         create-zip("build/stanzaenv-linux", "stanzaenv-linux", Linux)
       "windows" :
         call-system!([stanza-path "build" "stanzaenv-windows" "-verbose"])
-        create-zip("build/stanzaenv-windows", "stanzaenv-windows", Windows)
+        create-zip("build/stanzaenv-windows.exe", "stanzaenv-windows", Windows)
       else :
         throw(Exception("Invalid platform: %~." % [cmd-args["platform"]]))
     
