@@ -15,7 +15,7 @@ defpackage build :
 ;      stanzaenv-os-x/
 
 defn reset-build-folder () :
-  delete-recursive("build")
+  delete-recursive("build") when file-exists?("build")
   val paths = [
     "build/outputs"
     "build/staging/stanzaenv-os-x"]
