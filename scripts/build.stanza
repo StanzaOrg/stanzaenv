@@ -114,7 +114,7 @@ val BUILD-COMMAND = Command(
         throw(Exception("Invalid platform: %~." % [cmd-args["platform"]]))
     
   ;Flags
-  Flag(name = "platform", type = OneFlag))
+  Flag("platform", type = OneFlag))
 
 ;============================================================
 ;======================= Launch! ============================
