@@ -12,7 +12,7 @@ deftest test-stanzaenv-contents :
   create-dir-recursive(root)
 
   ;Unzip the zip file contents. 
-  val zip = "build/outputs/stanzaenv-osx.zip"
+  val zip = "build/outputs/stanzaenv-os-x.zip"
   extract(ZipArchive(zip), root)
 
   ;List of expected files in .zip archive.
@@ -43,7 +43,7 @@ defn try-fresh-install (prompts:String) :
   spit("testscratch/prompts.txt", prompts)
 
   ;Run the installation command.
-  val exe = "build/stanzaenv-osx"
+  val exe = "build/stanzaenv-os-x"
   call-system(exe,
               [exe, "install"]
               false,
@@ -92,7 +92,7 @@ deftest test-stanzaenv-install-versions :
   spit("testscratch/prompts.txt", prompts)
 
   ;Install the system.
-  val exe = "build/stanzaenv-osx"
+  val exe = "build/stanzaenv-os-x"
   call-system(exe,
               [exe, "install"]
               false,
