@@ -8,8 +8,8 @@ Given, this extension name, look in `project-config` and `global-config` for how
 
 Case: We find the extension location.
 
-Then this is the executable to call.
+  Then this is the executable to call.
 
 Case: We do not find the extension location.
 
-In this case, report that there is no extended Stanza within the current project with this name.
+  In this case, report that there is no extended Stanza within the current project with this name.

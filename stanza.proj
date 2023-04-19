@@ -4,13 +4,9 @@ packages stanzaenv/* defined-in "src"
 
 foreign-package-params(conan) :
   conan-build-dir:
-    on-platform:
-      linux: "lbuild"
-      else: "build"
+    "build"
   conan-cache-dir :
-    on-platform:
-      linux: "lconan"
-      else: "."
+    "."
   conan-install-extra-args:
     on-platform :
       windows:
@@ -32,11 +28,11 @@ foreign-package-params(conan) :
         {name: "conancenter", value: "https://center.conan.io"}
 
 package stanzaenv/windows-registry requires :
-  dynamic-library: "windows-registry.dll"
+  dynamic-libraries: "windows-registry.dll"
   ccfiles: "src/windows-registry.c"
 
 package curl requires :
-  dynamic-library: "libcurlbindings.dylib"
+  dynamic-libraries: "libcurlbindings.dylib"
   foreign-packages(conan) :
     "libcurl/7.82.0"
     "openssl/1.1.1o"
@@ -44,20 +40,20 @@ package curl requires :
   ccfiles: "src/lib-curl/curl.c"
 
 package zip requires :
-  dynamic-library: "libzip.5.5.dylib"
+  dynamic-libraries: "libzip.5.5.dylib"
   foreign-packages(conan) :
     "libzip/1.8.0"
 
 package stanzaenv/sysutils requires :
-  dynamic-library: "libsysutils.dylib"
+  dynamic-libraries: "libsysutils.dylib"
 
 dynamic-library-dirs :
   "bin/dylibs"
 
-build stanzaenv-osx :
+build stanzaenv-os-x :
   inputs: stanzaenv/main
-  o: "build/stanzaenv-osx"
-  s: "build/stanzaenv-osx.s"
+  o: "build/stanzaenv-os-x"
+  s: "build/stanzaenv-os-x.s"
   pkg: "build/pkgs"
 
 build stanzaenv-linux :

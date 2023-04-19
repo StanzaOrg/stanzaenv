@@ -16,7 +16,7 @@ public defn stanza-zipfile-url (platform:Platform, version:NamedVersion) -> Stri
 ;Returns the URL of the stanzaenv zip file.
 public defn stanzaenv-zip-url (platform:Platform) -> String :
   val base-name = switch(platform) :
-    OS-X: "stanzaenv-osx"
+    OS-X: "stanzaenv-os-x"
     Windows: "stanzaenv-windows"
     Linux: "stanzaenv-linux"
   val pattern = "http://lbstanza.org/resources/stanza/%_.zip"
