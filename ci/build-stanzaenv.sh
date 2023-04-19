@@ -84,7 +84,7 @@ cd "${REPODIR}"
 echo "Building stanzaenv version ${VER} in ${PWD}"
 
 if [ "$CREATE_PACKAGE" == "true" ] ; then
-  ${STANZA} run scripts/build.stanza -- build -platform ${STANZAENV_BUILD_PLATFORM}
+  ${STANZA} run scripts/build.stanza -- build -platform ${STANZAENV_BUILD_PLATFORM} -stanza ${STANZA}
 fi
 
 # if [ "$CREATE_ARCHIVE" == "true" ] ; then
