@@ -83,13 +83,8 @@ esac
 cd "${REPODIR}"
 echo "Building stanzaenv version ${VER} in ${PWD}"
 
-${STANZA} build stanzaenv-${STANZAENV_BUILD_PLATFORM} -verbose
-
-ls -l build/stanzaenv-${STANZAENV_BUILD_PLATFORM}
-
-
 if [ "$CREATE_PACKAGE" == "true" ] ; then
-  ${STANZA} run scripts/build.stanza -- zip-all
+  ${STANZA} run scripts/build.stanza -- build -platform ${STANZAENV_BUILD_PLATFORM}
 fi
 
 # if [ "$CREATE_ARCHIVE" == "true" ] ; then

@@ -9,15 +9,16 @@ public defn stanza-zipfile-url (platform:Platform, version:NamedVersion) -> Stri
     OS-X: "stanza"
     Windows: "wstanza"
     Linux: "lstanza"
-  val pattern = "http://lbstanza.org/resources/stanza/%__%__%__%_.zip"
+  val pattern = "https://github.com/StanzaOrg/lbstanza/releases/download/%_.%_.%_/%__%__%__%_.zip"
   val [a, b, c] = value(version)
-  to-string(pattern % [base-name, a, b, c])
+  to-string(pattern % [a, b, c, base-name, a, b, c])
 
 ;Returns the URL of the stanzaenv zip file.
-public defn stanzaenv-zip-url (platform:Platform) -> String :
+public defn stanzaenv-zip-url (platform:Platform, version:NamedVersion) -> String :
   val base-name = switch(platform) :
-    OS-X: "stanzaenv-os-x"
-    Windows: "stanzaenv-windows"
-    Linux: "stanzaenv-linux"
-  val pattern = "http://lbstanza.org/resources/stanza/%_.zip"
-  to-string(pattern % [base-name])
+    OS-X: "stanzaenv"
+    Windows: "wstanzaenv"
+    Linux: "lstanzaenv"
+  val pattern = "https://github.com/StanzaOrg/stanzaenv/releases/download/%_.%_.%_/%__%__%__%_.zip"
+  val [a, b, c] = value(version)
+  to-string(pattern % [a, b, c, base-name, a, b, c])

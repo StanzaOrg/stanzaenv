@@ -15,6 +15,7 @@ defpackage stanzaenv/install :
   import stanzaenv/set-version
   import stanzaenv/shims
   import stanzaenv/printing
+  import stanzaenv/current-version
 
 ;Main entry point: Install the 'stanzaenv' system.
 ;Will detect whether already installed.
@@ -36,7 +37,7 @@ defn fresh-install (sys:System) -> False :
   val install-dir = request-install-dir(sys)
   val parent-dir = parent-dir(path(install-dir)) as String
   within temp = make-temp-dir(sys, parent-dir) :
-    val url = stanzaenv-zip-url(current-platform(sys))
+    val url = stanzaenv-zip-url(current-platform(sys), NamedVersion(CURRENT-VERSION))
     val stanzaenv-zip = relative-to(temp, "stanzaenv.zip")
     download-to-file(sys, url, stanzaenv-zip)
     unzip-to-folder(sys, stanzaenv-zip, relative-to(temp, "stanzaenv"))
