@@ -99,22 +99,26 @@ val BUILD-COMMAND = Command(
     ;Reset the build folder.
     reset-build-folder()
 
+    ;Stanza path.
+    val stanza-path = get?(cmd-args, "stanza", "stanza")
+
     ;Dependency upon platform.
     switch(cmd-args["platform"]) :
       "os-x" :
-        call-system!(["stanza" "build" "stanzaenv-os-x"])
+        call-system!([stanza-path "build" "stanzaenv-os-x"])
         create-zip("build/stanzaenv-os-x", "stanzaenv-os-x", OS-X)
       "linux" :
-        call-system!(["stanza" "build" "stanzaenv-linux"])
+        call-system!([stanza-path "build" "stanzaenv-linux"])
         create-zip("build/stanzaenv-linux", "stanzaenv-linux", Linux)
       "windows" :
-        call-system!(["stanza" "build" "stanzaenv-windows"])
-        create-zip("/Users/patricksli/Dropbox/Transfer/stanzaenv-windows.exe", "stanzaenv-windows", Windows)
+        call-system!([stanza-path "build" "stanzaenv-windows"])
+        create-zip("build/stanzaenv-windows", "stanzaenv-windows", Windows)
       else :
         throw(Exception("Invalid platform: %~." % [cmd-args["platform"]]))
     
   ;Flags
-  Flag("platform", type = OneFlag))
+  Flag("platform", type = OneFlag)
+  Flag("stanza", type = OneFlag, optional? = OptionalFlag))
 
 ;============================================================
 ;======================= Launch! ============================
