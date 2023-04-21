@@ -30,13 +30,11 @@ PLATFORM_DESC="unknown"
 case "$STANZA_BUILD_PLATFORM" in
     Linux* | linux* | ubuntu*)
         STANZA_BUILD_PLATFORM=linux
-        STANZAENV_BUILD_PLATFORM=linux
         STANZA_PLATFORMCHAR="l"
         PLATFORM_DESC="$(grep ^ID= /etc/os-release | cut -f2 -d=)-$(grep ^VERSION_CODENAME= /etc/os-release | cut -f2 -d=)"
     ;;
     Darwin | mac* | os-x)
         STANZA_BUILD_PLATFORM=os-x
-        STANZAENV_BUILD_PLATFORM=os-x
         STANZA_PLATFORMCHAR=""
         PLATFORM_DESC="macos-unknown"
         case "$(sw_vers -productVersion)" in
@@ -65,7 +63,6 @@ case "$STANZA_BUILD_PLATFORM" in
     ;;
     MINGW* | win*)
         STANZA_BUILD_PLATFORM=windows
-        STANZAENV_BUILD_PLATFORM=windows
         STANZA_PLATFORMCHAR="w"
         PLATFORM_DESC="windows-unknown"
         case "$(uname -s)" in
@@ -84,7 +81,9 @@ cd "${REPODIR}"
 echo "Building stanzaenv version ${VER} in ${PWD}"
 
 if [ "$CREATE_PACKAGE" == "true" ] ; then
-  ${STANZA} run scripts/build.stanza -- build -platform ${STANZAENV_BUILD_PLATFORM} -stanza ${STANZA}
+    ${STANZA} run scripts/build.stanza -- build -platform ${STANZA_BUILD_PLATFORM} -stanza ${STANZA}
+    # we're expecting only one file to match "build/outputs/stanzaenv-*.zip"
+    mv build/outputs/stanzaenv-*.zip build/outputs/stanzaenv-${STANZA_BUILD_PLATFORM}_${VER}.zip
 fi
 
 # if [ "$CREATE_ARCHIVE" == "true" ] ; then
