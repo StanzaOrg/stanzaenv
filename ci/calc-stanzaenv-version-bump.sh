@@ -26,7 +26,7 @@ TOP="${PWD}"
 ### and convert spaces to dots
 >&2 echo "         PARAMSVER:" "${PARAMSVER:=$(git -C "${REPODIR}" log -1 -p -m  \
                                                 | filterdiff -p1 -i src/current-version.stanza \
-                                                | sed -E -n "s/^\+public val CURRENT-VERSION = \[(.*)\]/\1/p" \
+                                                | sed -E -n "s/^\+public val CURRENT-VERSION = \[(.*)\].*/\1/p" \
                                                 | tr -s ', ' .
                                               )}"
 
