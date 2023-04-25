@@ -18,20 +18,20 @@ TOP="${PWD}"
 >&2 echo "           PREVTAG:" "${PREVTAG:=$(git -C "${REPODIR}" describe --tags --abbrev=0)}"
 [[ "$PREVTAG" == "" ]] && PREVTAG=0.0.0-initial.0
 
-## look for a change in the version number in compiler/params.stanza
+## look for a change in the version number in src/current-version.stanza
 ## and if it changed in the most recent commit, use that as the version
 ### get the most recent commit, incuding merges
-### look for changes in compiler/params.stanza
+### look for changes in src/current-version.stanza
 ### if the version line was changed, extract the new version number
 ### and convert spaces to dots
 >&2 echo "         PARAMSVER:" "${PARAMSVER:=$(git -C "${REPODIR}" log -1 -p -m  \
-                                                | filterdiff -p1 -i compiler/params.stanza \
+                                                | filterdiff -p1 -i src/current-version.stanza \
                                                 | sed -E -n "s/^\+public val STANZA-VERSION = \[(.*)\]/\1/p" \
                                                 | tr ' ' .
                                               )}"
 
 if [[ "${PARAMSVER}" != "" ]] ; then
-    # the version in compiler/params.stanza was changed, so use that as the version
+    # the version in src/current-version.stanza was changed, so use that as the version
     NEWVER=${PARAMSVER}
 else
     ## By default, bump the prerelease version using the branch name
